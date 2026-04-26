@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Ghost of Harlow Hall</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --accent2: #7fb3d3;
+    --danger: #c0392b;
+    --success: #1d9e75;
+    --text: #e8e0d0;
+    --muted: #888;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* TITLE */
+  #title-screen { background: #0a0a0a; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; }
+  #title-screen::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(200,169,110,0.02) 2px, rgba(200,169,110,0.02) 4px); pointer-events: none; }
+  .title-badge { font-family: 'Special Elite', cursive; font-size: 11px; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase; margin-bottom: 24px; opacity: 0; animation: fadeUp 0.8s 0.3s forwards; }
+  .title-main { font-family: 'Special Elite', cursive; font-size: clamp(2.2rem, 5vw, 3.8rem); color: var(--text); line-height: 1.1; margin-bottom: 8px; opacity: 0; animation: fadeUp 0.8s 0.6s forwards; }
+  .title-sub { font-family: 'Crimson Pro', serif; font-style: italic; font-size: 1.2rem; color: var(--muted); margin-bottom: 48px; opacity: 0; animation: fadeUp 0.8s 0.9s forwards; }
+  .title-divider { width: 80px; height: 1px; background: var(--accent); margin: 0 auto 48px; opacity: 0; animation: fadeUp 0.8s 0.75s forwards; }
+  .case-file { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 24px 32px; max-width: 480px; text-align: left; margin-bottom: 40px; opacity: 0; animation: fadeUp 0.8s 1.2s forwards; }
+  .case-file-label { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 12px; }
+  .case-file p { font-family: 'Crimson Pro', serif; font-size: 1rem; color: #bbb; line-height: 1.7; }
+  .btn-start { font-family: 'Special Elite', cursive; font-size: 14px; letter-spacing: 0.15em; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 14px 40px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; opacity: 0; animation: fadeUp 0.8s 1.5s forwards; }
+  .btn-start:hover { background: var(--accent); color: #0a0a0a; }
+
+  /* GAME LAYOUT */
+  #game-screen { flex-direction: row; height: 100vh; overflow: hidden; }
+  .sidebar { width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; overflow-y: auto; }
+  .sidebar-title { font-family: 'Special Elite', cursive; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); padding: 0 20px 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .location-item { padding: 10px 20px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .location-item.active { border-left-color: var(--accent); color: var(--accent); background: rgba(200,169,110,0.05); }
+  .location-item.locked { opacity: 0.35; cursor: not-allowed; }
+  .location-item.done { color: var(--success); }
+  .location-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .sidebar-section { padding: 16px 20px 0; margin-top: auto; border-top: 1px solid var(--border); }
+  .sidebar-section-label { font-size: 10px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 10px; }
+  .evidence-pill { display: inline-block; font-size: 10px; padding: 3px 8px; background: rgba(200,169,110,0.1); border: 1px solid rgba(200,169,110,0.2); border-radius: 2px; color: var(--accent); margin: 2px 2px 2px 0; }
+
+  .scene-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .scene-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+  .scene-location { font-family: 'Special Elite', cursive; font-size: 13px; color: var(--accent); }
+  .scene-progress { font-size: 11px; color: var(--muted); }
+  .scene-main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ─── ILLUSTRATED SCENE ─── */
+  .illustrated-scene {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 20px;
+    height: 420px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: #1a1a2e;
+  }
+
+  /* Scene 1 — Nadia's Dorm */
+  .scene-dorm-nadia { background: linear-gradient(180deg, #d4a3c8 0%, #d4a3c8 65%, #6b3a2a 65%, #6b3a2a 100%); }
+  .scene-dorm-nadia .wall-pattern { position: absolute; top: 0; left: 0; right: 0; height: 65%; background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 1px, transparent 2px), radial-gradient(circle at 70% 60%, rgba(255,255,255,0.08) 1px, transparent 2px), radial-gradient(circle at 40% 80%, rgba(255,255,255,0.08) 1px, transparent 2px); background-size: 80px 80px; }
+  .scene-dorm-nadia .window { position: absolute; top: 30px; left: 40px; width: 110px; height: 100px; background: #1a1f2e; border: 6px solid #fff; border-radius: 2px; }
+  .scene-dorm-nadia .window::before, .scene-dorm-nadia .window::after { content: ''; position: absolute; background: #fff; }
+  .scene-dorm-nadia .window::before { top: 0; bottom: 0; left: 50%; width: 4px; transform: translateX(-50%); }
+  .scene-dorm-nadia .window::after { left: 0; right: 0; top: 50%; height: 4px; transform: translateY(-50%); }
+  .scene-dorm-nadia .window-stars { position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 20% 30%, #ffeb99, transparent), radial-gradient(1px 1px at 60% 70%, #ffeb99, transparent), radial-gradient(1px 1px at 80% 20%, #ffeb99, transparent), radial-gradient(1px 1px at 35% 85%, #ffeb99, transparent); }
+
+  /* Posters on the wall */
+  .scene-dorm-nadia .poster-n { position: absolute; border: 3px solid #fff; box-shadow: 1px 1px 4px rgba(0,0,0,0.2); }
+  .scene-dorm-nadia .poster-1 { top: 20px; left: 175px; width: 75px; height: 100px; background: linear-gradient(135deg, #ff6b9d 0%, #c44ec1 50%, #6b4ec1 100%); }
+  .scene-dorm-nadia .poster-1::before { content: 'BLACKPINK'; position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 9px; color: #fff; letter-spacing: 0.1em; }
+  .scene-dorm-nadia .poster-1::after { content: ''; position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 35px; height: 35px; border-radius: 50%; background: #fff; opacity: 0.3; }
+  .scene-dorm-nadia .poster-2 { top: 35px; left: 270px; width: 70px; height: 90px; background: linear-gradient(180deg, #1a1f3a 0%, #c44ec1 100%); transform: rotate(-3deg); }
+  .scene-dorm-nadia .poster-2::before { content: '♡ TXT ♡'; position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 11px; color: #ffeb99; }
+  .scene-dorm-nadia .poster-2::after { content: 'WORLD TOUR'; position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #fff; letter-spacing: 0.1em; }
+  .scene-dorm-nadia .poster-3 { top: 25px; left: 360px; width: 75px; height: 95px; background: linear-gradient(45deg, #ff6b9d 0%, #ffa3c2 50%, #ffd6cc 100%); transform: rotate(2deg); }
+  .scene-dorm-nadia .poster-3::before { content: '✿ daisy ✿'; position: absolute; top: 16px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 10px; color: #fff; }
+  .scene-dorm-nadia .poster-3::after { content: 'tour 2024'; position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #6b1f3a; }
+
+  /* Larger noticeboard */
+  .scene-dorm-nadia .noticeboard { position: absolute; top: 30px; right: 30px; width: 150px; height: 110px; background: #c8a986; border: 5px solid #5a3e20; border-radius: 2px; }
+  .scene-dorm-nadia .noticeboard-paper { position: absolute; background: #f4f1e8; box-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+  .scene-dorm-nadia .noticeboard-paper:nth-child(1) { top: 10px; left: 10px; width: 50px; height: 38px; transform: rotate(-3deg); }
+  .scene-dorm-nadia .noticeboard-paper:nth-child(2) { top: 14px; left: 70px; width: 55px; height: 35px; transform: rotate(4deg); background: #ffeb99; }
+  .scene-dorm-nadia .noticeboard-paper:nth-child(3) { top: 60px; left: 20px; width: 60px; height: 38px; transform: rotate(-2deg); }
+  .scene-dorm-nadia .noticeboard-paper:nth-child(4) { top: 56px; right: 12px; width: 45px; height: 40px; transform: rotate(5deg); background: #ffd6cc; }
+
+  /* Queen bed - facing forward, two pillows */
+  .scene-dorm-nadia .bed { position: absolute; bottom: 30px; left: 30px; width: 220px; height: 100px; background: #d4a3c8; border-radius: 8px 8px 4px 4px; border: 2px solid #a87fa0; }
+  .scene-dorm-nadia .bed::before { content: ''; position: absolute; top: -12px; left: -2px; right: -2px; height: 22px; background: #a87fa0; border-radius: 8px 8px 0 0; }
+  .scene-dorm-nadia .bed-blanket { position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: repeating-linear-gradient(45deg, #b87fb0, #b87fb0 6px, #a86fa0 6px, #a86fa0 12px); border-radius: 0 0 4px 4px; }
+  .scene-dorm-nadia .pillow { position: absolute; top: 12px; width: 70px; height: 38px; background: #fff; border-radius: 6px; box-shadow: 1px 1px 3px rgba(0,0,0,0.15); }
+  .scene-dorm-nadia .pillow-1 { left: 16px; }
+  .scene-dorm-nadia .pillow-2 { right: 16px; }
+  .scene-dorm-nadia .plushie { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 24px; height: 26px; background: #ff9ec4; border-radius: 50% 50% 30% 30%; }
+  .scene-dorm-nadia .plushie::before, .scene-dorm-nadia .plushie::after { content: ''; position: absolute; top: -4px; width: 8px; height: 10px; background: #ff9ec4; border-radius: 50%; }
+  .scene-dorm-nadia .plushie::before { left: 2px; }
+  .scene-dorm-nadia .plushie::after { right: 2px; }
+
+  /* Desk with PC and chair */
+  .scene-dorm-nadia .desk { position: absolute; bottom: 90px; right: 60px; width: 230px; height: 14px; background: #c8a986; border-radius: 2px; border: 1px solid #a88a6a; }
+  /* Desk legs — positioned relative to scene, matching desk right:60px width:230px → left edge at ~610px on 900px scene */
+  .scene-dorm-nadia .desk-leg { position: absolute; bottom: 30px; width: 10px; height: 62px; background: #a88a6a; border-radius: 0 0 3px 3px; }
+  .scene-dorm-nadia .desk-leg-1 { right: 68px; }
+  .scene-dorm-nadia .desk-leg-2 { right: 278px; }
+  /* Laptop on desk */
+  .scene-dorm-nadia .pc-monitor { position: absolute; bottom: 104px; right: 160px; width: 70px; height: 50px; background: #1a1a1a; border: 3px solid #fff; border-radius: 4px; }
+  .scene-dorm-nadia .pc-monitor::before { content: ''; position: absolute; inset: 3px; background: linear-gradient(135deg, #4a3a5a 0%, #2a1f3a 100%); border-radius: 1px; }
+  .scene-dorm-nadia .pc-monitor::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 24px; height: 8px; background: #1a1a1a; border-radius: 0 0 4px 4px; }
+  .scene-dorm-nadia .pc-keyboard { position: absolute; bottom: 92px; right: 140px; width: 110px; height: 8px; background: #fff; border-radius: 2px; border: 1px solid #ddd; }
+  /* Laptop on table (separate from PC) */
+  .scene-dorm-nadia .laptop-table { position: absolute; bottom: 104px; right: 75px; width: 56px; height: 36px; background: #c0c0c0; border-radius: 3px 3px 0 0; border: 2px solid #888; }
+  .scene-dorm-nadia .laptop-table::before { content: ''; position: absolute; inset: 3px; background: linear-gradient(135deg, #1a4d8c 0%, #0a2a5c 100%); border-radius: 1px; }
+  .scene-dorm-nadia .laptop-table::after { content: ''; position: absolute; bottom: -6px; left: 0; right: 0; height: 6px; background: #a0a0a0; border-radius: 0 0 3px 3px; }
+  /* Pink desk chair */
+  .scene-dorm-nadia .desk-chair { position: absolute; bottom: 30px; right: 145px; width: 60px; height: 70px; }
+  .scene-dorm-nadia .desk-chair::before { content: ''; position: absolute; top: 0; left: 8px; width: 44px; height: 50px; background: #ff9ec4; border-radius: 6px 6px 4px 4px; border: 2px solid #d47fa0; }
+  .scene-dorm-nadia .desk-chair::after { content: ''; position: absolute; bottom: 0; left: 22px; width: 16px; height: 22px; background: #888; }
+
+  /* Anxious Nadia character with subtle tremble — holding phone in right arm */
+  .scene-dorm-nadia .nadia-char { position: absolute; bottom: 30px; left: 280px; width: 50px; height: 110px; animation: anxiousTremble 2.5s ease-in-out infinite; }
+  @keyframes anxiousTremble { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-0.5px) rotate(-0.4deg); } 50% { transform: translateX(0.5px) rotate(0deg); } 75% { transform: translateX(-0.3px) rotate(0.3deg); } }
+  .scene-dorm-nadia .nadia-char .head { position: absolute; top: 0; left: 13px; width: 24px; height: 26px; background: #d4a886; border-radius: 50%; }
+  .scene-dorm-nadia .nadia-char .hair { position: absolute; top: -2px; left: 9px; width: 32px; height: 24px; background: #2c1810; border-radius: 50% 50% 30% 30%; }
+  .scene-dorm-nadia .nadia-char .hair::before { content: ''; position: absolute; bottom: -8px; left: -2px; width: 12px; height: 14px; background: #2c1810; border-radius: 0 0 50% 50%; }
+  .scene-dorm-nadia .nadia-char .hair::after { content: ''; position: absolute; bottom: -8px; right: -2px; width: 12px; height: 14px; background: #2c1810; border-radius: 0 0 50% 50%; }
+  /* Anxious eyes */
+  .scene-dorm-nadia .nadia-char .eye-l { position: absolute; top: 12px; left: 17px; width: 3px; height: 4px; background: #2c1810; border-radius: 50%; }
+  .scene-dorm-nadia .nadia-char .eye-r { position: absolute; top: 12px; right: 17px; width: 3px; height: 4px; background: #2c1810; border-radius: 50%; }
+  /* Worried eyebrows */
+  .scene-dorm-nadia .nadia-char .brow-l { position: absolute; top: 8px; left: 16px; width: 6px; height: 1.5px; background: #2c1810; transform: rotate(-20deg); }
+  .scene-dorm-nadia .nadia-char .brow-r { position: absolute; top: 8px; right: 16px; width: 6px; height: 1.5px; background: #2c1810; transform: rotate(20deg); }
+  /* Frowning mouth */
+  .scene-dorm-nadia .nadia-char .mouth { position: absolute; top: 21px; left: 19px; width: 8px; height: 3px; border: 1.5px solid #2c1810; border-radius: 0 0 50% 50%; border-top: none; transform: rotate(180deg); }
+  /* Worry sweat drop */
+  .scene-dorm-nadia .nadia-char .sweat { position: absolute; top: 4px; right: 2px; width: 5px; height: 7px; background: #7fb3d3; border-radius: 50% 50% 50% 0%; transform: rotate(45deg); opacity: 0.85; }
+  .scene-dorm-nadia .nadia-char .body { position: absolute; top: 26px; left: 7px; width: 36px; height: 50px; background: #ff9ec4; border-radius: 8px 8px 0 0; border: 1px solid #d47fa0; }
+  /* Left arm crossed over body */
+  .scene-dorm-nadia .nadia-char .arm-l { position: absolute; top: 38px; left: 0px; width: 26px; height: 7px; background: #ff9ec4; border-radius: 4px; transform: rotate(10deg); border: 1px solid #d47fa0; }
+  /* Right arm holding phone — angled down */
+  .scene-dorm-nadia .nadia-char .arm-r { position: absolute; top: 44px; right: -4px; width: 20px; height: 7px; background: #ff9ec4; border-radius: 4px; transform: rotate(60deg); border: 1px solid #d47fa0; }
+  /* Phone held in right hand */
+  .scene-dorm-nadia .nadia-char .phone-held { position: absolute; top: 56px; right: -8px; width: 14px; height: 22px; background: #2c2c2c; border-radius: 3px; border: 1px solid #555; z-index: 3; }
+  .scene-dorm-nadia .nadia-char .phone-held::before { content: ''; position: absolute; inset: 2px; background: linear-gradient(135deg, #c8a96e 0%, #9a7a3e 100%); border-radius: 1px; }
+  /* Proper legs: two separate legs with feet */
+  .scene-dorm-nadia .nadia-char .leg-l { position: absolute; bottom: 0; left: 10px; width: 12px; height: 34px; background: #4a3a5a; border-radius: 3px 3px 4px 4px; }
+  .scene-dorm-nadia .nadia-char .leg-r { position: absolute; bottom: 0; right: 10px; width: 12px; height: 34px; background: #4a3a5a; border-radius: 3px 3px 4px 4px; }
+  .scene-dorm-nadia .nadia-char .foot-l { position: absolute; bottom: 0; left: 6px; width: 16px; height: 6px; background: #2c1810; border-radius: 0 4px 4px 4px; }
+  .scene-dorm-nadia .nadia-char .foot-r { position: absolute; bottom: 0; right: 4px; width: 16px; height: 6px; background: #2c1810; border-radius: 4px 0 4px 4px; }
+
+  /* Floor rug */
+  .scene-dorm-nadia .floor-rug { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 240px; height: 70px; background: radial-gradient(ellipse, #ff9ec4 0%, #d47fa0 100%); border-radius: 50%; opacity: 0.6; }
+
+  /* Scene 2 — Library */
+  .scene-library { background: linear-gradient(180deg, #f4ecd8 0%, #f4ecd8 65%, #7a5c38 65%, #7a5c38 100%); }
+  /* Shelves — 3 per side, tighter to edges, leaving clear centre gap for sign */
+  .scene-library .shelf { position: absolute; top: 30px; background: #5a3e20; border: 2px solid #3d2814; width: 100px; height: 230px; }
+  .scene-library .shelf-1 { left: 8px; }
+  .scene-library .shelf-2 { left: 116px; }
+  .scene-library .shelf-3 { left: 224px; }
+  .scene-library .shelf-4 { right: 8px; }
+  .scene-library .shelf-5 { right: 116px; }
+  .scene-library .shelf-6 { right: 224px; }
+  .scene-library .shelf-row { position: absolute; left: 4px; right: 4px; height: 34px; display: flex; gap: 2px; padding: 2px; background: #3d2814; }
+  .scene-library .shelf-row:nth-child(1) { top: 8px; }
+  .scene-library .shelf-row:nth-child(2) { top: 50px; }
+  .scene-library .shelf-row:nth-child(3) { top: 92px; }
+  .scene-library .shelf-row:nth-child(4) { top: 134px; }
+  .scene-library .shelf-row:nth-child(5) { top: 176px; }
+  .scene-library .book { flex: 1; height: 100%; border-radius: 1px; }
+  /* University name sign — sits in clear centre gap between shelf-3 (ends ~332px) and shelf-6 (starts ~568px on 900px) */
+  .scene-library .uni-sign {
+    position: absolute; top: 30px;
+    left: 332px; right: 332px;
+    background: #3d2814; border: 3px solid #c8a96e;
+    border-radius: 4px; padding: 14px 8px;
+    text-align: center; z-index: 3;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  }
+  .scene-library .uni-sign-name { font-family: 'Special Elite', cursive; font-size: 12px; color: #ffeb99; letter-spacing: 0.1em; line-height: 1.6; }
+  .scene-library .uni-sign-divider { width: 50px; height: 1px; background: #c8a96e; margin: 6px auto; }
+  .scene-library .uni-sign-sub { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #c8a96e; letter-spacing: 0.18em; }
+  /* Reception desk — raised z-index so it sits in front of Rosnah's body */
+  .scene-library .desk-lib { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 340px; height: 55px; background: #6b4c2a; border-radius: 4px 4px 0 0; border: 2px solid #4a3418; box-shadow: inset 0 -4px 0 #4a3418; z-index: 6; }
+  .scene-library .desk-lib::after { content: ''; position: absolute; bottom: -40px; left: 20px; right: 20px; height: 40px; background: #5a3e20; z-index: 6; }
+  .scene-library .desk-front-panel { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 340px; height: 10px; background: #c8a96e; z-index: 7; }
+  /* Lamp — right side of desk */
+  .scene-library .lamp-lib { position: absolute; bottom: 105px; left: calc(50% + 110px); width: 6px; height: 35px; background: #2c2c2c; border-radius: 3px; z-index: 8; }
+  .scene-library .lamp-lib::after { content: ''; position: absolute; top: -18px; left: -12px; width: 30px; height: 20px; background: #c8a96e; border-radius: 50% 50% 4px 4px; box-shadow: 0 0 35px rgba(200,169,110,0.6); }
+  /* Logbook on desk left side */
+  .scene-library .logbook-obj { position: absolute; bottom: 108px; left: calc(50% - 170px); width: 60px; height: 14px; background: #f4f1e8; border-radius: 1px; border: 1px solid #ccc; pointer-events: none; z-index: 8; }
+  .scene-library .logbook-obj::before { content: ''; position: absolute; top: 3px; left: 5px; right: 5px; height: 1px; background: #bbb; box-shadow: 0 4px 0 #bbb; }
+  /* Computer monitor on desk */
+  .scene-library .computer-desk { position: absolute; bottom: 108px; left: calc(50% - 55px); width: 56px; height: 42px; background: #1a1a1a; border: 2px solid #444; border-radius: 3px; z-index: 8; }
+  .scene-library .computer-desk::before { content: ''; position: absolute; inset: 3px; background: linear-gradient(135deg, #2a3148 0%, #1a1f2e 100%); }
+  .scene-library .computer-desk::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 20px; height: 6px; background: #333; }
+  /* Cik Rosnah — lowered so body is hidden behind desk, only head+shoulders visible above desk top */
+  .scene-library .librarian { position: absolute; bottom: 44px; left: 50%; transform: translateX(20px); width: 44px; height: 90px; z-index: 5; }
+  .scene-library .librarian .hijab { position: absolute; top: 0px; left: 0px; width: 44px; height: 40px; background: #2a1f5a; border-radius: 50% 50% 20% 20%; z-index: 2; }
+  .scene-library .librarian .hijab-drape { position: absolute; top: 16px; left: -2px; width: 48px; height: 32px; background: #2a1f5a; border-radius: 0 0 40% 40%; z-index: 1; }
+  .scene-library .librarian .head { position: absolute; top: 4px; left: 10px; width: 24px; height: 26px; background: #d4a886; border-radius: 50%; z-index: 3; }
+  .scene-library .librarian .eye-l { position: absolute; top: 13px; left: 14px; width: 2.5px; height: 2.5px; background: #2c1810; border-radius: 50%; z-index: 4; }
+  .scene-library .librarian .eye-r { position: absolute; top: 13px; right: 14px; width: 2.5px; height: 2.5px; background: #2c1810; border-radius: 50%; z-index: 4; }
+  .scene-library .librarian .mouth { position: absolute; top: 20px; left: 17px; width: 7px; height: 2px; border-bottom: 2px solid #a0704a; border-radius: 0 0 3px 3px; z-index: 4; }
+  .scene-library .librarian .body { position: absolute; top: 44px; left: 4px; width: 36px; height: 50px; background: #2a1f5a; border-radius: 6px 6px 0 0; z-index: 2; }
+  /* Arms resting on desk surface */
+  .scene-library .librarian .arm-l { position: absolute; top: 58px; left: -8px; width: 16px; height: 7px; background: #2a1f5a; border-radius: 4px; transform: rotate(-10deg); }
+  .scene-library .librarian .arm-r { position: absolute; top: 58px; right: -8px; width: 16px; height: 7px; background: #2a1f5a; border-radius: 4px; transform: rotate(10deg); }
+  .scene-library .librarian .leg-l { position: absolute; bottom: 0; left: 8px; width: 12px; height: 10px; background: #1a1560; border-radius: 2px; }
+  .scene-library .librarian .leg-r { position: absolute; bottom: 0; right: 8px; width: 12px; height: 10px; background: #1a1560; border-radius: 2px; }
+
+  /* Scene 3 — Darren's Dorm */
+  .scene-dorm-darren { background: linear-gradient(180deg, #1f2538 0%, #1f2538 65%, #2a1f1a 65%, #2a1f1a 100%); }
+  .scene-dorm-darren .desk-d { position: absolute; bottom: 100px; left: 60px; width: 380px; height: 16px; background: #3d2814; border-radius: 2px; box-shadow: 0 2px 0 #2a1810; }
+  .scene-dorm-darren .desk-leg-d { position: absolute; bottom: 30px; width: 8px; height: 70px; background: #2a1810; }
+  .scene-dorm-darren .desk-leg-d-1 { left: 70px; }
+  .scene-dorm-darren .desk-leg-d-2 { left: 430px; }
+  .scene-dorm-darren .monitor { position: absolute; bottom: 116px; background: #0a0a0a; border: 3px solid #2c2c2c; border-radius: 4px; box-shadow: 0 0 14px rgba(127,179,211,0.15); }
+  .scene-dorm-darren .monitor-1 { left: 100px; width: 100px; height: 70px; }
+  .scene-dorm-darren .monitor-2 { left: 220px; width: 100px; height: 70px; }
+  .scene-dorm-darren .monitor-screen { position: absolute; inset: 3px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); overflow: hidden; }
+  .scene-dorm-darren .monitor-1 .monitor-screen::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(180deg, transparent 0%, rgba(127,179,211,0.3) 100%); }
+  .scene-dorm-darren .monitor-1 .monitor-screen::after { content: '@nadia.razali'; position: absolute; top: 8px; left: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: #7fb3d3; opacity: 0.7; }
+  .scene-dorm-darren .monitor-2 .monitor-screen { background: linear-gradient(135deg, #2a1a3e 0%, #1a0a2e 100%); }
+  .scene-dorm-darren .monitor-2 .monitor-screen::after { content: '> game.exe'; position: absolute; top: 8px; left: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: #1d9e75; }
+  .scene-dorm-darren .monitor-stand { position: absolute; bottom: 100px; width: 14px; height: 16px; background: #2c2c2c; }
+  .scene-dorm-darren .monitor-stand-1 { left: 143px; }
+  .scene-dorm-darren .monitor-stand-2 { left: 263px; }
+  .scene-dorm-darren .keyboard { position: absolute; bottom: 105px; left: 140px; width: 170px; height: 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 2px; box-shadow: 0 0 6px rgba(192,57,43,0.4); }
+  .scene-dorm-darren .keyboard::before { content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 8px; background: repeating-linear-gradient(90deg, #2c2c2c 0%, #2c2c2c 10%, #1a1a1a 10%, #1a1a1a 12%); border-radius: 1px; }
+  .scene-dorm-darren .mouse { position: absolute; bottom: 105px; left: 320px; width: 18px; height: 14px; background: #1a1a1a; border-radius: 50% 50% 30% 30%; border: 1px solid #444; box-shadow: 0 0 4px rgba(192,57,43,0.5); }
+  .scene-dorm-darren .phone-d { position: absolute; bottom: 105px; left: 350px; width: 24px; height: 42px; background: #2c2c2c; border-radius: 4px; border: 1px solid #444; }
+  .scene-dorm-darren .phone-d::before { content: ''; position: absolute; inset: 2px; background: linear-gradient(135deg, #4a3a5a 0%, #2a1f3a 100%); border-radius: 2px; }
+  .scene-dorm-darren .phone-d::after { content: '⚡'; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #c8a96e; }
+  .scene-dorm-darren .books-d { position: absolute; bottom: 105px; left: 385px; width: 32px; height: 28px; background: linear-gradient(90deg, #c0392b 0%, #c0392b 33%, #1565c0 33%, #1565c0 66%, #2e7d32 66%, #2e7d32 100%); }
+  .scene-dorm-darren .notebook-paper { position: absolute; bottom: 102px; left: 388px; width: 24px; height: 18px; background: #f4e8a8; transform: rotate(-12deg); border: 1px solid #c8a96e; box-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+  .scene-dorm-darren .notebook-paper::before { content: ''; position: absolute; top: 4px; left: 3px; right: 3px; height: 1px; background: #888; box-shadow: 0 4px 0 #888, 0 8px 0 #888; }
+
+  /* Proper desk chair with backrest, seat and wheel base */
+  .scene-dorm-darren .desk-chair { position: absolute; bottom: 30px; left: 200px; width: 80px; height: 90px; z-index: 4; }
+  .scene-dorm-darren .desk-chair .chair-back { position: absolute; top: 0; left: 14px; width: 52px; height: 50px; background: linear-gradient(180deg, #2a1a3e 0%, #1a0a2a 100%); border-radius: 8px 8px 4px 4px; border: 2px solid #c0392b; }
+  .scene-dorm-darren .desk-chair .chair-back::before { content: ''; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 30px; height: 12px; background: #c0392b; border-radius: 4px; }
+  .scene-dorm-darren .desk-chair .chair-seat { position: absolute; top: 46px; left: 6px; width: 68px; height: 12px; background: #2a1a3e; border: 2px solid #c0392b; border-radius: 4px; }
+  .scene-dorm-darren .desk-chair .chair-pole { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); width: 6px; height: 18px; background: #444; }
+  .scene-dorm-darren .desk-chair .chair-base { position: absolute; bottom: 4px; left: 8px; width: 64px; height: 4px; background: #2c2c2c; border-radius: 50%; }
+  .scene-dorm-darren .desk-chair .wheel { position: absolute; bottom: 0; width: 8px; height: 8px; background: #1a1a1a; border-radius: 50%; border: 1px solid #444; }
+  .scene-dorm-darren .desk-chair .wheel-l { left: 8px; }
+  .scene-dorm-darren .desk-chair .wheel-c { left: 36px; }
+  .scene-dorm-darren .desk-chair .wheel-r { right: 8px; }
+
+  .scene-dorm-darren .pizza-box { position: absolute; bottom: 30px; right: 100px; width: 60px; height: 12px; background: #6b4c2a; border: 1px solid #3d2814; border-radius: 2px; }
+  .scene-dorm-darren .pizza-box::before { content: 'PIZZA'; position: absolute; top: 1px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 7px; color: #c8a96e; letter-spacing: 0.1em; }
+
+  /* Original GAME OVER poster */
+  .scene-dorm-darren .poster-d { position: absolute; top: 25px; left: 60px; width: 70px; height: 95px; background: linear-gradient(180deg, #4a148c 0%, #1a0a2e 100%); border: 2px solid #2c2c2c; box-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
+  .scene-dorm-darren .poster-d::before { content: 'GAME'; position: absolute; top: 30px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 13px; color: #c8a96e; }
+  .scene-dorm-darren .poster-d::after { content: 'OVER'; position: absolute; top: 52px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 13px; color: #c0392b; }
+
+  /* Mario poster — red, with star and M logo */
+  .scene-dorm-darren .poster-mario { position: absolute; top: 30px; left: 145px; width: 70px; height: 90px; background: linear-gradient(180deg, #e53935 0%, #c0392b 100%); border: 2px solid #2c2c2c; transform: rotate(-2deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
+  .scene-dorm-darren .poster-mario::before { content: 'M'; position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 28px; height: 28px; background: #fff; border-radius: 50%; color: #c0392b; font-family: 'Special Elite', cursive; font-size: 22px; line-height: 28px; text-align: center; font-weight: bold; }
+  .scene-dorm-darren .poster-mario::after { content: 'SUPER MARIO'; position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 8px; color: #ffeb99; letter-spacing: 0.1em; }
+
+  /* Zelda poster — green/triforce */
+  .scene-dorm-darren .poster-zelda { position: absolute; top: 25px; left: 230px; width: 70px; height: 95px; background: linear-gradient(180deg, #1b5e20 0%, #0d2f10 100%); border: 2px solid #c8a96e; transform: rotate(2deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
+  .scene-dorm-darren .poster-zelda::before { content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-bottom: 26px solid #c8a96e; filter: drop-shadow(0 0 4px rgba(200,169,110,0.5)); }
+  .scene-dorm-darren .poster-zelda::after { content: 'THE LEGEND'; position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 7px; color: #c8a96e; letter-spacing: 0.15em; }
+
+  /* Pokemon poster — yellow/red Pokeball */
+  .scene-dorm-darren .poster-pokemon { position: absolute; top: 30px; left: 315px; width: 65px; height: 90px; background: linear-gradient(180deg, #ffeb3b 0%, #f9a825 100%); border: 2px solid #2c2c2c; transform: rotate(-1deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
+  .scene-dorm-darren .poster-pokemon::before { content: ''; position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; background: linear-gradient(180deg, #c0392b 0%, #c0392b 50%, #fff 50%, #fff 100%); border: 2px solid #1a1a1a; border-radius: 50%; }
+  .scene-dorm-darren .poster-pokemon::after { content: 'POKÉMON'; position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 9px; color: #1565c0; letter-spacing: 0.05em; }
+
+  /* Darren character — sitting in the chair, gaming */
+  .scene-dorm-darren .darren-char { position: absolute; bottom: 70px; left: 215px; width: 50px; height: 80px; z-index: 5; }
+  .scene-dorm-darren .darren-char .head { position: absolute; top: 0; left: 13px; width: 24px; height: 26px; background: #c89870; border-radius: 50%; }
+  .scene-dorm-darren .darren-char .hair { position: absolute; top: -2px; left: 9px; width: 32px; height: 18px; background: #1a1410; border-radius: 50% 50% 20% 20%; }
+  .scene-dorm-darren .darren-char .eye-l { position: absolute; top: 12px; left: 17px; width: 3px; height: 3px; background: #2c1810; border-radius: 50%; z-index: 2; }
+  .scene-dorm-darren .darren-char .eye-r { position: absolute; top: 12px; right: 17px; width: 3px; height: 3px; background: #2c1810; border-radius: 50%; z-index: 2; }
+  .scene-dorm-darren .darren-char .body { position: absolute; top: 26px; left: 9px; width: 32px; height: 40px; background: #2a3148; border-radius: 6px 6px 0 0; }
+  .scene-dorm-darren .darren-char .arm-l { position: absolute; top: 32px; left: 0px; width: 14px; height: 6px; background: #2a3148; border-radius: 4px; transform: rotate(20deg); }
+  /* Right arm raised holding phone */
+  .scene-dorm-darren .darren-char .arm-r { position: absolute; top: 22px; right: -4px; width: 14px; height: 6px; background: #2a3148; border-radius: 4px; transform: rotate(-60deg); }
+  /* Phone held up in right hand */
+  .scene-dorm-darren .darren-char .phone-held { position: absolute; top: 8px; right: -12px; width: 13px; height: 22px; background: #2c2c2c; border-radius: 3px; border: 1px solid #555; z-index: 6; }
+  .scene-dorm-darren .darren-char .phone-held::before { content: ''; position: absolute; inset: 2px; background: linear-gradient(135deg, #4a3a5a 0%, #c8a96e 100%); border-radius: 1px; }
+  .scene-dorm-darren .darren-char .legs { position: absolute; bottom: 0; left: 13px; width: 24px; height: 14px; background: #1a1a1a; }
+
+  /* Window — beside the posters on left wall */
+  .scene-dorm-darren .window-d { position: absolute; top: 25px; left: 400px; width: 110px; height: 130px; background: #0d1520; border: 8px solid #3d2814; border-radius: 2px; }
+  .scene-dorm-darren .window-d::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: #3d2814; transform: translateX(-50%); }
+  .scene-dorm-darren .window-d::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 4px; background: #3d2814; transform: translateY(-50%); }
+  .scene-dorm-darren .window-d-stars { position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 15% 25%, #ffeb99, transparent), radial-gradient(1px 1px at 55% 65%, #ffeb99, transparent), radial-gradient(1px 1px at 75% 20%, #ffeb99, transparent), radial-gradient(1px 1px at 30% 80%, #c8a96e, transparent), radial-gradient(1px 1px at 85% 50%, #ffeb99, transparent), radial-gradient(2px 2px at 45% 40%, #fff, transparent); }
+
+  /* Queen bed — right side of room */
+  .scene-dorm-darren .bed-d { position: absolute; bottom: 30px; right: 30px; width: 220px; height: 110px; background: #2a1a3e; border-radius: 6px 6px 3px 3px; border: 2px solid #3d2855; }
+  .scene-dorm-darren .bed-d::before { content: ''; position: absolute; top: -14px; left: -2px; right: -2px; height: 24px; background: #3d2855; border-radius: 6px 6px 0 0; }
+  .scene-dorm-darren .bed-d-blanket { position: absolute; bottom: 0; left: 0; right: 0; height: 55px; background: repeating-linear-gradient(45deg, #1a0a2e, #1a0a2e 6px, #2a1a3e 6px, #2a1a3e 12px); border-radius: 0 0 3px 3px; border-top: 2px solid #c0392b; }
+  .scene-dorm-darren .pillow-d-1 { position: absolute; top: 12px; left: 14px; width: 72px; height: 36px; background: #1a1a2e; border-radius: 5px; border: 1px solid #444; }
+  .scene-dorm-darren .pillow-d-2 { position: absolute; top: 12px; right: 14px; width: 72px; height: 36px; background: #1a1a2e; border-radius: 5px; border: 1px solid #444; }
+
+  /* Scene 4 — IT Department */
+  .scene-it { background: linear-gradient(180deg, #1a2538 0%, #1a2538 70%, #0f1a28 70%, #0f1a28 100%); }
+  .scene-it .server-rack { position: absolute; top: 30px; background: #1a1a1a; border: 2px solid #2c2c2c; border-radius: 2px; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .scene-it .rack-1 { left: 40px; width: 90px; height: 280px; }
+  .scene-it .rack-2 { left: 145px; width: 90px; height: 280px; }
+  .scene-it .rack-3 { left: 250px; width: 90px; height: 280px; }
+  .scene-it .server-unit { height: 18px; background: #0a0a0a; border-radius: 1px; position: relative; }
+  .scene-it .server-unit::before { content: ''; position: absolute; top: 6px; left: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--success); box-shadow: 0 0 4px var(--success); }
+  .scene-it .server-unit::after { content: ''; position: absolute; top: 6px; left: 12px; right: 4px; height: 4px; background: linear-gradient(90deg, #2c2c2c 0%, #2c2c2c 80%, #c8a96e 80%, #c8a96e 100%); }
+  .scene-it .server-unit:nth-child(odd)::before { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  .scene-it .glass-partition { position: absolute; top: 20px; right: 280px; width: 4px; height: 320px; background: rgba(127,179,211,0.3); border-left: 1px solid rgba(127,179,211,0.5); }
+  /* Desk with legs */
+  .scene-it .desk-it { position: absolute; bottom: 60px; right: 30px; width: 260px; height: 16px; background: #5a3e20; border-radius: 2px; box-shadow: 0 2px 0 #3d2814; }
+  .scene-it .desk-it-leg { position: absolute; bottom: 30px; width: 10px; background: #3d2814; border-radius: 0 0 3px 3px; }
+  .scene-it .desk-it-leg-l { right: 280px; height: 32px; }
+  .scene-it .desk-it-leg-r { right: 38px; height: 32px; }
+  /* Full PC setup — tower, monitor, keyboard */
+  .scene-it .pc-tower { position: absolute; bottom: 76px; right: 38px; width: 28px; height: 52px; background: #1a1a1a; border: 2px solid #2c2c2c; border-radius: 3px; }
+  .scene-it .pc-tower::before { content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 4px var(--success); }
+  .scene-it .pc-tower::after { content: ''; position: absolute; top: 20px; left: 4px; right: 4px; height: 3px; background: #2c2c2c; box-shadow: 0 6px 0 #2c2c2c, 0 12px 0 #2c2c2c; }
+  .scene-it .pc-monitor { position: absolute; bottom: 76px; right: 75px; width: 80px; height: 58px; background: #0a0a0a; border: 3px solid #2c2c2c; border-radius: 4px; }
+  .scene-it .pc-monitor::before { content: ''; position: absolute; inset: 3px; background: linear-gradient(135deg, #001a0a 0%, #002a10 100%); }
+  .scene-it .pc-monitor::after { content: '> _'; position: absolute; top: 8px; left: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: var(--success); }
+  .scene-it .pc-monitor-stand { position: absolute; bottom: 72px; right: 109px; width: 12px; height: 4px; background: #2c2c2c; }
+  .scene-it .pc-monitor-base { position: absolute; bottom: 68px; right: 104px; width: 22px; height: 4px; background: #2c2c2c; border-radius: 2px; }
+  .scene-it .pc-keyboard { position: absolute; bottom: 76px; right: 78px; width: 80px; height: 8px; background: #1a1a1a; border: 1px solid #333; border-radius: 2px; }
+  .scene-it .pc-keyboard::before { content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 3px; background: repeating-linear-gradient(90deg, #2c2c2c 0, #2c2c2c 8%, #1a1a1a 8%, #1a1a1a 12%); }
+  /* Chair for Hafiz */
+  .scene-it .it-chair { position: absolute; bottom: 30px; right: 148px; width: 60px; height: 70px; }
+  .scene-it .it-chair .ch-back { position: absolute; top: 0; left: 10px; width: 40px; height: 40px; background: #1565c0; border-radius: 6px 6px 3px 3px; border: 2px solid #0d47a1; }
+  .scene-it .it-chair .ch-seat { position: absolute; top: 36px; left: 4px; width: 52px; height: 10px; background: #1565c0; border-radius: 3px; border: 1px solid #0d47a1; }
+  .scene-it .it-chair .ch-pole { position: absolute; top: 46px; left: 50%; transform: translateX(-50%); width: 6px; height: 14px; background: #444; }
+  .scene-it .it-chair .ch-base { position: absolute; bottom: 4px; left: 8px; width: 44px; height: 4px; background: #2c2c2c; border-radius: 50%; }
+  .scene-it .it-chair .ch-wheel { position: absolute; bottom: 0; width: 7px; height: 7px; background: #1a1a1a; border-radius: 50%; }
+  .scene-it .it-chair .ch-wheel-l { left: 8px; }
+  .scene-it .it-chair .ch-wheel-r { right: 8px; }
+  /* Hafiz — seated in chair */
+  .scene-it .it-char { position: absolute; bottom: 60px; right: 152px; width: 50px; height: 70px; z-index: 5; }
+  .scene-it .it-char .head { position: absolute; top: 0; left: 13px; width: 24px; height: 26px; background: #c89870; border-radius: 50%; }
+  .scene-it .it-char .hair { position: absolute; top: -2px; left: 9px; width: 32px; height: 16px; background: #2a1f10; border-radius: 50% 50% 20% 20%; }
+  .scene-it .it-char .eye-l { position: absolute; top: 12px; left: 17px; width: 2.5px; height: 2.5px; background: #2c1810; border-radius: 50%; z-index: 2; }
+  .scene-it .it-char .eye-r { position: absolute; top: 12px; right: 17px; width: 2.5px; height: 2.5px; background: #2c1810; border-radius: 50%; z-index: 2; }
+  .scene-it .it-char .body { position: absolute; top: 26px; left: 9px; width: 32px; height: 34px; background: var(--success); border-radius: 6px 6px 0 0; }
+  /* Arms on desk */
+  .scene-it .it-char .arm-l { position: absolute; top: 36px; left: -2px; width: 14px; height: 6px; background: var(--success); border-radius: 4px; transform: rotate(-15deg); }
+  .scene-it .it-char .arm-r { position: absolute; top: 36px; right: -2px; width: 14px; height: 6px; background: var(--success); border-radius: 4px; transform: rotate(15deg); }
+  /* Seated legs */
+  .scene-it .it-char .leg-l { position: absolute; bottom: 0; left: 11px; width: 12px; height: 10px; background: #1a2a3a; border-radius: 2px; }
+  .scene-it .it-char .leg-r { position: absolute; bottom: 0; right: 11px; width: 12px; height: 10px; background: #1a2a3a; border-radius: 2px; }
+  /* IT Department sign — full university name */
+  .scene-it .it-sign { position: absolute; top: 30px; right: 50px; width: 220px; background: #0d1a2a; border: 3px solid #c8a96e; border-radius: 4px; padding: 12px 14px; box-shadow: 0 0 20px rgba(200,169,110,0.2); }
+  .scene-it .it-sign-uni { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #7fb3d3; letter-spacing: 0.2em; margin-bottom: 4px; }
+  .scene-it .it-sign-divider { width: 100%; height: 1px; background: rgba(200,169,110,0.3); margin: 6px 0; }
+  .scene-it .it-sign-text { font-family: 'Special Elite', cursive; font-size: 16px; color: #c8a96e; letter-spacing: 0.2em; }
+  .scene-it .it-sign-sub { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #7fb3d3; letter-spacing: 0.2em; margin-top: 4px; }
+
+  /* Scene 5 — Security Office */
+  .scene-security { background: linear-gradient(180deg, #2a2520 0%, #2a2520 65%, #1f1a15 65%, #1f1a15 100%); }
+
+  /* Corkboard — centre behind desk */
+  .scene-security .corkboard-bg { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 380px; height: 150px; background: #c8a986; border: 6px solid #5a3e20; border-radius: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+  .scene-security .corkboard-paper { position: absolute; background: #f4f1e8; box-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+  .scene-security .corkboard-paper:nth-child(1) { top: 14px; left: 18px; width: 55px; height: 40px; transform: rotate(-3deg); }
+  .scene-security .corkboard-paper:nth-child(2) { top: 16px; left: 88px; width: 52px; height: 36px; transform: rotate(2deg); }
+  .scene-security .corkboard-paper:nth-child(3) { top: 72px; left: 30px; width: 60px; height: 40px; transform: rotate(-2deg); }
+  .scene-security .corkboard-paper:nth-child(4) { top: 14px; right: 80px; width: 55px; height: 38px; transform: rotate(4deg); background: #ffeb99; }
+  .scene-security .corkboard-paper:nth-child(5) { top: 68px; right: 50px; width: 58px; height: 40px; transform: rotate(-3deg); }
+  .scene-security .corkboard-paper:nth-child(6) { top: 14px; right: 14px; width: 52px; height: 36px; transform: rotate(2deg); background: #ffd6cc; }
+  .scene-security .red-string { position: absolute; height: 1.5px; background: #c0392b; transform-origin: left center; }
+  .scene-security .string-1 { top: 55px; left: 60px; width: 90px; transform: rotate(10deg); }
+  .scene-security .string-2 { top: 75px; left: 130px; width: 110px; transform: rotate(-6deg); }
+  .scene-security .string-3 { top: 95px; left: 80px; width: 140px; transform: rotate(18deg); }
+  /* Pushpin dots on papers */
+  .scene-security .pin { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #c0392b; }
+  .scene-security .pin-1 { top: 22px; left: 42px; }
+  .scene-security .pin-2 { top: 22px; left: 112px; }
+  .scene-security .pin-3 { top: 78px; left: 56px; }
+  .scene-security .pin-4 { top: 20px; right: 100px; }
+  .scene-security .pin-5 { top: 74px; right: 72px; }
+
+  /* Organisation board — left wall */
+  .scene-security .org-board { position: absolute; top: 25px; left: 30px; width: 140px; height: 200px; background: #f0ece0; border: 4px solid #5a3e20; border-radius: 2px; box-shadow: 1px 1px 6px rgba(0,0,0,0.4); }
+  .scene-security .org-board-title { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-family: 'Special Elite', cursive; font-size: 8px; color: #3d2814; letter-spacing: 0.1em; }
+  .scene-security .org-board-divider { position: absolute; top: 22px; left: 8px; right: 8px; height: 1px; background: #5a3e20; }
+  /* Org chart boxes */
+  .scene-security .org-box { position: absolute; background: #5a3e20; border-radius: 2px; }
+  .scene-security .org-box-text { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 6px; color: #ffeb99; text-align: center; width: 100%; top: 50%; transform: translateY(-50%); letter-spacing: 0.05em; line-height: 1.4; }
+  .scene-security .org-box-top { top: 30px; left: 50%; transform: translateX(-50%); width: 80px; height: 22px; background: #3d2814; }
+  .scene-security .org-box-mid-l { top: 68px; left: 10px; width: 52px; height: 20px; }
+  .scene-security .org-box-mid-r { top: 68px; right: 10px; width: 52px; height: 20px; }
+  .scene-security .org-box-bot-1 { top: 108px; left: 6px; width: 38px; height: 18px; background: #6b4c2a; }
+  .scene-security .org-box-bot-2 { top: 108px; left: 52px; width: 38px; height: 18px; background: #6b4c2a; }
+  .scene-security .org-box-bot-3 { top: 108px; right: 6px; width: 38px; height: 18px; background: #6b4c2a; }
+  /* Connector lines */
+  .scene-security .org-line { position: absolute; background: #5a3e20; }
+  .scene-security .org-line-v1 { top: 52px; left: 50%; transform: translateX(-50%); width: 1px; height: 16px; }
+  .scene-security .org-line-h { top: 68px; left: 36px; width: 68px; height: 1px; }
+  .scene-security .org-line-v2 { top: 68px; left: 36px; width: 1px; height: 20px; }
+  .scene-security .org-line-v3 { top: 68px; right: 36px; width: 1px; height: 20px; }
+  .scene-security .org-line-h2 { top: 108px; left: 24px; width: 30px; height: 1px; }
+  .scene-security .org-line-h3 { top: 108px; right: 18px; width: 30px; height: 1px; }
+  .scene-security .org-line-v4 { top: 88px; left: 24px; width: 1px; height: 20px; }
+  .scene-security .org-line-v5 { top: 88px; left: 70px; width: 1px; height: 20px; }
+  .scene-security .org-line-v6 { top: 88px; right: 24px; width: 1px; height: 20px; }
+
+  /* Work Ethics poster — right wall */
+  .scene-security .ethics-poster { position: absolute; top: 25px; right: 30px; width: 130px; height: 200px; background: linear-gradient(180deg, #1a2538 0%, #0f1a28 100%); border: 4px solid #c8a96e; border-radius: 2px; box-shadow: 1px 1px 6px rgba(0,0,0,0.4); padding: 12px 10px; text-align: center; }
+  .scene-security .ethics-poster-title { font-family: 'Special Elite', cursive; font-size: 11px; color: #c8a96e; letter-spacing: 0.15em; margin-bottom: 6px; line-height: 1.4; }
+  .scene-security .ethics-poster-divider { width: 40px; height: 1px; background: #c8a96e; margin: 6px auto; opacity: 0.6; }
+  .scene-security .ethics-poster-line { font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: #7fb3d3; margin: 5px 0; letter-spacing: 0.05em; line-height: 1.5; }
+  .scene-security .ethics-poster-seal { width: 40px; height: 40px; border-radius: 50%; background: rgba(200,169,110,0.15); border: 2px solid rgba(200,169,110,0.4); margin: 10px auto 0; display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', cursive; font-size: 18px; color: #c8a96e; }
+
+  /* Reception desk — large, centred, Puan Suraya behind it */
+  .scene-security .desk-s { position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%); width: 400px; height: 65px; background: #5a3e20; border: 2px solid #3d2814; border-radius: 4px; box-shadow: inset 0 -4px 0 #3d2814; }
+  .scene-security .desk-s-legs::before { content: ''; position: absolute; bottom: 25px; left: calc(50% - 175px); width: 18px; height: 30px; background: #3d2814; border-radius: 0 0 3px 3px; }
+  .scene-security .desk-s-legs::after { content: ''; position: absolute; bottom: 25px; right: calc(50% - 175px); width: 18px; height: 30px; background: #3d2814; border-radius: 0 0 3px 3px; }
+  /* Desk name sign */
+  .scene-security .desk-sign { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 180px; height: 20px; background: #3d2814; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+  .scene-security .desk-sign::before { content: 'HEAD OF CAMPUS SECURITY'; position: absolute; font-family: 'Special Elite', cursive; font-size: 15px; color: #c8a96e; letter-spacing: 0.12em; white-space: nowrap; }
+  /* Case file on desk */
+  .scene-security .file-folder { position: absolute; top: 8px; left: 24px; width: 80px; height: 50px; background: #c8a96e; border-radius: 2px; transform: rotate(-2deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+  .scene-security .file-folder::before { content: 'CASE FILE'; position: absolute; top: 8px; left: 8px; font-family: 'Special Elite', cursive; font-size: 8px; color: #5a3e20; letter-spacing: 0.1em; }
+  .scene-security .file-folder::after { content: '#UTN-2024-0441'; position: absolute; top: 22px; left: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 6px; color: #5a3e20; }
+  /* Lamp on desk — right side, pools warm light */
+  .scene-security .lamp-s { position: absolute; bottom: 120px; left: calc(50% + 140px); width: 7px; height: 45px; background: #2c2c2c; border-radius: 3px; }
+  .scene-security .lamp-s::before { content: ''; position: absolute; top: -6px; left: -4px; width: 15px; height: 6px; background: #2c2c2c; border-radius: 3px; transform: rotate(-20deg); }
+  .scene-security .lamp-s::after { content: ''; position: absolute; top: -24px; left: -14px; width: 34px; height: 24px; background: #c8a96e; border-radius: 50% 50% 4px 4px; box-shadow: 0 0 70px rgba(200,169,110,0.7), 0 0 30px rgba(200,169,110,0.4); }
+  .scene-security .lamp-base { position: absolute; bottom: 118px; left: calc(50% + 137px); width: 16px; height: 4px; background: #3d3d3d; border-radius: 2px; }
+
+  /* Puan Suraya — seated BEHIND desk (player's side is the front, she's further back) */
+  .scene-security .security-char { position: absolute; bottom: 86px; left: 50%; transform: translateX(20px); width: 44px; height: 90px; z-index: 3; }
+  .scene-security .security-char .head { position: absolute; top: 0; left: 10px; width: 24px; height: 26px; background: #d4a886; border-radius: 50%; }
+  .scene-security .security-char .hair { position: absolute; top: -2px; left: 6px; width: 32px; height: 24px; background: #2c1810; border-radius: 50% 50% 30% 30%; }
+  /* Neat bun at back */
+  .scene-security .security-char .hair::after { content: ''; position: absolute; top: -4px; right: -2px; width: 12px; height: 12px; background: #2c1810; border-radius: 50%; }
+  .scene-security .security-char .eye-l { position: absolute; top: 12px; left: 14px; width: 2.5px; height: 2.5px; background: #2c1810; border-radius: 50%; }
+  .scene-security .security-char .eye-r { position: absolute; top: 12px; right: 14px; width: 2.5px; height: 2.5px; background: #2c1810; border-radius: 50%; }
+  .scene-security .security-char .mouth { position: absolute; top: 20px; left: 17px; width: 7px; height: 2px; border-bottom: 1.5px solid #a0704a; border-radius: 0 0 3px 3px; }
+  /* Uniform — navy blazer */
+  .scene-security .security-char .body { position: absolute; top: 26px; left: 3px; width: 38px; height: 48px; background: #2a3148; border-radius: 6px 6px 0 0; }
+  /* Badge on blazer */
+  .scene-security .security-char .body::before { content: '★'; position: absolute; top: 8px; left: 6px; font-size: 9px; color: #c8a96e; }
+  .scene-security .security-char .arm-l { position: absolute; top: 36px; left: -4px; width: 14px; height: 6px; background: #2a3148; border-radius: 4px; transform: rotate(-15deg); }
+  .scene-security .security-char .arm-r { position: absolute; top: 36px; right: -4px; width: 14px; height: 6px; background: #2a3148; border-radius: 4px; transform: rotate(15deg); }
+  .scene-security .security-char .leg-l { position: absolute; bottom: 0; left: 8px; width: 12px; height: 10px; background: #1a2030; border-radius: 2px; }
+  .scene-security .security-char .leg-r { position: absolute; bottom: 0; right: 8px; width: 12px; height: 10px; background: #1a2030; border-radius: 2px; }
+
+  /* HOTSPOTS — clickable on the scene */
+  .hotspot {
+    position: absolute;
+    z-index: 5;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .hotspot:hover { transform: scale(1.08); }
+  .hotspot.hs-logbook:hover { transform: none; }
+  .hotspot.hs-logbook .hotspot-label { bottom: auto; top: -28px; left: 0; transform: none; white-space: nowrap; }
+  .hotspot.found { cursor: default; opacity: 0.5; }
+  .hotspot.found:hover { transform: none; }
+  .hotspot-pulse {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #0a0a0a;
+    animation: pulse 1.5s infinite;
+    z-index: 10;
+  }
+  .hotspot.found .hotspot-pulse { display: none; }
+  .hotspot-label {
+    position: absolute;
+    bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.92);
+    border: 1px solid var(--accent);
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-size: 10px;
+    color: var(--accent);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 20;
+    letter-spacing: 0.05em;
+  }
+  .hotspot:hover .hotspot-label { opacity: 1; }
+  /* Edge-aware label positioning to prevent clipping at scene edges */
+  .hotspot.label-anchor-left .hotspot-label { left: 0; transform: translateX(0); }
+  .hotspot.label-anchor-right .hotspot-label { left: auto; right: 0; transform: translateX(0); }
+  .hotspot.found::before {
+    content: '✓';
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #0a0a0a;
+    font-size: 11px;
+    text-align: center;
+    line-height: 16px;
+    z-index: 10;
+  }
+
+  /* Specific hotspot positioning per scene */
+  /* Nadia hotspots */
+  .hs-laptop { bottom: 104px; right: 68px; width: 56px; height: 36px; }
+  .hs-laptop::after { content: ''; position: absolute; inset: 0; background: transparent; }
+  .hs-laptop::before { content: ''; position: absolute; inset: 0; }
+  .hs-phone-n { bottom: 56px; left: 318px; width: 14px; height: 22px; }
+  .hs-phone-n::after { content: ''; position: absolute; inset: 0; background: transparent; }
+  .hs-phone-n::before { content: ''; position: absolute; inset: 0; }
+  /* Printout lives on the noticeboard — top:30px right:30px width:150px */
+  .hs-printout { top: 38px; right: 38px; width: 140px; height: 100px; }
+
+  /* Logbook — fixed position on desk, no transform so hover doesn't shift it */
+  .hs-logbook { bottom: 106px; left: calc(50% - 170px); width: 62px; height: 18px; transform: none !important; }
+  .hs-logbook::after { content: ''; position: absolute; inset: 0; background: transparent; }
+  .hs-logbook::before { content: ''; position: absolute; inset: 0; }
+  /* CCTV — left wall, above shelves */
+  .hs-cctv { top: 10px; left: 20px; width: 50px; height: 60px; }
+  .hs-cctv::after { content: ''; position: absolute; top: 0; left: 8px; width: 34px; height: 8px; background: #2c2c2c; border-radius: 4px 4px 0 0; }
+  .hs-cctv::before { content: ''; position: absolute; top: 6px; left: 4px; width: 42px; height: 28px; background: radial-gradient(ellipse at 50% 30%, #444 0%, #1a1a1a 70%); border-radius: 50% 50% 30% 30%; border: 2px solid #2c2c2c; box-shadow: inset 0 -3px 6px rgba(0,0,0,0.5); }
+  .hs-cctv .lens { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; background: radial-gradient(circle at 35% 35%, #c8a96e 0%, #5a3e20 40%, #1a0a00 100%); border-radius: 50%; box-shadow: 0 0 6px rgba(200,169,110,0.6); z-index: 2; }
+  .hs-cctv .rec-light { position: absolute; top: 36px; left: 14px; width: 4px; height: 4px; background: #c0392b; border-radius: 50%; box-shadow: 0 0 4px #c0392b; animation: blink 1.5s infinite; z-index: 2; }
+  .hs-cctv .mount-arm { position: absolute; top: 36px; right: 18px; width: 14px; height: 22px; background: linear-gradient(90deg, #2c2c2c 0%, #444 50%, #2c2c2c 100%); }
+  /* WiFi AP — far right wall */
+  .hs-wifilog { top: 275px; right: 20px; width: 60px; height: 70px; }
+  .hs-cctv::after { content: ''; position: absolute; top: 0; left: 8px; width: 34px; height: 8px; background: #2c2c2c; border-radius: 4px 4px 0 0; }
+  .hs-cctv::before { content: ''; position: absolute; top: 6px; left: 4px; width: 42px; height: 28px; background: radial-gradient(ellipse at 50% 30%, #444 0%, #1a1a1a 70%); border-radius: 50% 50% 30% 30%; border: 2px solid #2c2c2c; box-shadow: inset 0 -3px 6px rgba(0,0,0,0.5); }
+  .hs-cctv .lens { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; background: radial-gradient(circle at 35% 35%, #c8a96e 0%, #5a3e20 40%, #1a0a00 100%); border-radius: 50%; box-shadow: 0 0 6px rgba(200,169,110,0.6); z-index: 2; }
+  .hs-cctv .rec-light { position: absolute; top: 36px; left: 14px; width: 4px; height: 4px; background: #c0392b; border-radius: 50%; box-shadow: 0 0 4px #c0392b; animation: blink 1.5s infinite; z-index: 2; }
+  .hs-cctv .mount-arm { position: absolute; top: 36px; right: 18px; width: 14px; height: 22px; background: linear-gradient(90deg, #2c2c2c 0%, #444 50%, #2c2c2c 100%); }
+  @keyframes blink { 0%,55%{opacity:1} 56%,100%{opacity:0.2} }
+
+  /* Realistic Wi-Fi access point */
+  .hs-wifilog::after { content: ''; position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 50px; height: 36px; background: linear-gradient(180deg, #f4f1e8 0%, #d4d0c0 100%); border-radius: 4px; border: 1.5px solid #888; box-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+  .hs-wifilog::before { content: ''; position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: #1d9e75; border-radius: 50%; box-shadow: 0 0 6px #1d9e75; z-index: 3; animation: blink 2s infinite; }
+  .hs-wifilog .ap-antenna-l { position: absolute; top: 0; left: 14px; width: 3px; height: 22px; background: linear-gradient(180deg, #888 0%, #2c2c2c 100%); border-radius: 2px; transform: rotate(-12deg); }
+  .hs-wifilog .ap-antenna-r { position: absolute; top: 0; right: 14px; width: 3px; height: 22px; background: linear-gradient(180deg, #888 0%, #2c2c2c 100%); border-radius: 2px; transform: rotate(12deg); }
+  .hs-wifilog .ap-signal-1 { position: absolute; top: 36px; left: 50%; transform: translateX(-50%); width: 16px; height: 8px; border: 1.5px solid #1d9e75; border-bottom: none; border-radius: 50% 50% 0 0; opacity: 0.6; z-index: 2; }
+  .hs-wifilog .ap-signal-2 { position: absolute; top: 32px; left: 50%; transform: translateX(-50%); width: 26px; height: 13px; border: 1.5px solid #1d9e75; border-bottom: none; border-radius: 50% 50% 0 0; opacity: 0.4; z-index: 2; }
+  .hs-wifilog .ap-label { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: #666; letter-spacing: 0.05em; z-index: 3; }
+
+  .hs-monitor-d { bottom: 116px; left: 100px; width: 100px; height: 70px; }
+  /* Phone hotspot aligned to Darren's raised hand — char at left:215px, phone-held at right:-12px of 50px wide char = left ~253px, top ~8px of char bottom:70px */
+  .hs-phone-d { bottom: 72px; left: 253px; width: 16px; height: 24px; }
+  /* Dartboard beside window */
+  .scene-dorm-darren .dartboard { position: absolute; top: 40px; left: 528px; width: 70px; height: 70px; border-radius: 50%; background: radial-gradient(circle, #f4f1e8 0%, #f4f1e8 10%, #c0392b 10%, #c0392b 22%, #f4f1e8 22%, #f4f1e8 34%, #2c2c2c 34%, #2c2c2c 46%, #f4f1e8 46%, #f4f1e8 58%, #c0392b 58%, #c0392b 70%, #1a1a1a 70%, #1a1a1a 100%); border: 4px solid #2c2c2c; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
+  .scene-dorm-darren .dartboard::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 8px; height: 8px; background: #ffeb99; border-radius: 50%; box-shadow: 0 0 4px #ffeb99; }
+  .scene-dorm-darren .dartboard::after { content: ''; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 4px; height: 16px; background: #2c2c2c; border-radius: 2px; }
+  /* Dart stuck in board */
+  .scene-dorm-darren .dart { position: absolute; top: 54px; left: 545px; width: 2px; height: 14px; background: #c8a96e; border-radius: 1px; transform: rotate(15deg); }
+  .scene-dorm-darren .dart::before { content: ''; position: absolute; top: -4px; left: -2px; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-bottom: 6px solid #c0392b; }
+  .hs-notebook-d { bottom: 102px; left: 388px; width: 24px; height: 18px; }
+
+  .hs-guestnet { top: 30px; left: 40px; width: 90px; height: 280px; }
+  .hs-iplog { top: 30px; left: 145px; width: 90px; height: 280px; }
+  .hs-discord { top: 30px; left: 250px; width: 90px; height: 280px; }
+
+  /* DESCRIPTION & UI */
+  .scene-description { font-family: 'Crimson Pro', serif; font-size: 1rem; color: #bbb; line-height: 1.7; margin: 0 auto 20px; padding: 12px 18px; border-left: 2px solid var(--border); max-width: 900px; }
+
+  .npc-section { max-width: 900px; margin: 0 auto 20px; }
+  .npc-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 14px; }
+  .npc-card:hover { border-color: var(--accent2); }
+  .npc-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', cursive; font-size: 15px; flex-shrink: 0; }
+  .npc-info { flex: 1; }
+  .npc-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .npc-role { font-size: 11px; color: var(--muted); }
+  .npc-cta { font-size: 10px; color: var(--accent2); letter-spacing: 0.1em; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 4px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-type { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 4px; }
+  .modal-title { font-family: 'Special Elite', cursive; font-size: 1.1rem; color: var(--text); }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px 24px; }
+  .modal-body p { font-family: 'Crimson Pro', serif; font-size: 1rem; color: #bbb; line-height: 1.7; margin-bottom: 12px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+  .btn-collect { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.1em; background: transparent; border: 1px solid var(--success); color: var(--success); padding: 10px 24px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+  .btn-collect:hover { background: var(--success); color: #0a0a0a; }
+  .btn-dismiss { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 10px 20px; cursor: pointer; transition: all 0.2s; }
+  .btn-dismiss:hover { border-color: var(--muted); color: var(--text); }
+
+  .dialogue-npc { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+  .dialogue-bubble { background: rgba(127,179,211,0.08); border: 1px solid rgba(127,179,211,0.2); border-radius: 0 8px 8px 8px; padding: 12px 16px; flex: 1; font-family: 'Crimson Pro', serif; font-size: 1rem; color: #bbb; line-height: 1.6; }
+  .dialogue-choices { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .dialogue-choice { background: var(--surface); border: 1px solid var(--border); padding: 10px 16px; cursor: pointer; font-size: 12px; color: var(--text); text-align: left; transition: all 0.15s; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; }
+  .dialogue-choice:hover { border-color: var(--accent2); color: var(--accent2); }
+  .dialogue-choice.asked { opacity: 0.45; cursor: default; }
+
+  .ethical-flag { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.4); border-radius: 4px; padding: 20px; max-width: 900px; margin: 0 auto 20px; }
+  .ethical-flag-title { font-size: 11px; letter-spacing: 0.2em; color: #e74c3c; margin-bottom: 8px; }
+  .ethical-flag p { font-family: 'Crimson Pro', serif; font-size: 1rem; color: #bbb; line-height: 1.6; }
+  .flag-btn { margin-top: 12px; font-size: 11px; padding: 8px 18px; cursor: pointer; border: 1px solid; border-radius: 2px; background: transparent; transition: all 0.2s; font-family: 'IBM Plex Mono', monospace; }
+  .flag-btn.flag { border-color: #e74c3c; color: #e74c3c; }
+  .flag-btn.flag:hover { background: #e74c3c; color: #0a0a0a; }
+  .flag-btn.ignore { border-color: var(--border); color: var(--muted); margin-left: 8px; }
+  .flag-btn.ignore:hover { border-color: var(--muted); color: var(--text); }
+
+  .unlock-banner { background: rgba(29,158,117,0.08); border: 1px solid rgba(29,158,117,0.3); border-radius: 4px; padding: 14px 18px; max-width: 900px; margin: 0 auto 20px; font-size: 12px; color: var(--success); }
+
+  .verdict-cta-box { max-width: 900px; margin: 0 auto; background: var(--card); border: 1px solid var(--accent); border-radius: 4px; padding: 24px; text-align: center; }
+  .verdict-cta-box h3 { font-family: 'Special Elite', cursive; color: var(--accent); margin-bottom: 8px; }
+  .verdict-cta-box p { font-family: 'Crimson Pro', serif; color: var(--muted); margin-bottom: 16px; }
+
+  /* VERDICT SCREEN */
+  #verdict-screen { background: #0a0a0a; align-items: center; justify-content: center; padding: 40px 20px; }
+  .verdict-board { max-width: 640px; width: 100%; }
+  .verdict-title { font-family: 'Special Elite', cursive; font-size: 2rem; color: var(--accent); margin-bottom: 8px; text-align: center; }
+  .verdict-sub { font-family: 'Crimson Pro', serif; font-style: italic; color: var(--muted); text-align: center; margin-bottom: 32px; }
+  .suspect-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .suspect-card { background: var(--card); border: 2px solid var(--border); border-radius: 4px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .suspect-card:hover { border-color: var(--accent); }
+  .suspect-card.selected { border-color: var(--accent); background: rgba(200,169,110,0.06); }
+  .suspect-initial { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', cursive; font-size: 20px; }
+  .suspect-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .suspect-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .evidence-summary { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; margin-bottom: 20px; }
+  .evidence-summary-title { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 10px; }
+  .evidence-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn-verdict { width: 100%; font-family: 'Special Elite', cursive; font-size: 15px; letter-spacing: 0.1em; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 16px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .btn-verdict:hover:not(:disabled) { background: var(--accent); color: #0a0a0a; }
+  .btn-verdict:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ENDING */
+  #ending-screen { background: #0a0a0a; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+  .ending-icon { font-size: 64px; margin-bottom: 24px; }
+  .ending-title { font-family: 'Special Elite', cursive; font-size: 2.2rem; margin-bottom: 12px; }
+  .ending-body { font-family: 'Crimson Pro', serif; font-size: 1.1rem; color: #bbb; line-height: 1.8; max-width: 520px; margin: 0 auto 32px; }
+  .score-box { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 24px 32px; display: inline-block; margin-bottom: 32px; }
+  .score-label { font-size: 11px; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 6px; }
+  .score-value { font-family: 'Special Elite', cursive; font-size: 2.5rem; }
+  .btn-replay { font-family: 'Special Elite', cursive; font-size: 13px; letter-spacing: 0.15em; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 12px 32px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .btn-replay:hover { border-color: var(--accent); color: var(--accent); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.4} }
+/* ─── EVIDENCE VISUALISATIONS ─── */
+.ev-container { background: #0a0a0a; border-radius: 6px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--border); }
+
+/* Twitter/X profile mockup */
+.tw-profile { background: #000; color: #e7e9ea; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+.tw-header { background: linear-gradient(180deg, #4a3a5a 0%, #2a1f3a 100%); height: 80px; position: relative; }
+.tw-avatar { position: absolute; bottom: -32px; left: 16px; width: 64px; height: 64px; border-radius: 50%; background: #c8a96e; border: 4px solid #000; display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', cursive; font-size: 22px; color: #2a1f3a; }
+.tw-info { padding: 40px 16px 12px; }
+.tw-name { font-weight: 500; font-size: 15px; color: #e7e9ea; }
+.tw-handle { color: #71767b; font-size: 13px; margin-bottom: 8px; }
+.tw-verified { display: inline-block; background: #c0392b; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 2px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.05em; }
+.tw-bio { color: #e7e9ea; font-size: 13px; margin-bottom: 8px; }
+.tw-meta { color: #71767b; font-size: 12px; }
+.tw-stats { display: flex; gap: 16px; padding: 0 16px 12px; font-size: 12px; }
+.tw-stats span strong { color: #e7e9ea; }
+.tw-stats span { color: #71767b; }
+.tw-tab-bar { display: flex; border-bottom: 1px solid #2f3336; }
+.tw-tab { flex: 1; text-align: center; padding: 12px; font-size: 13px; color: #71767b; border-bottom: 3px solid transparent; }
+.tw-tab.active { color: #e7e9ea; border-bottom-color: #1d9bf0; }
+.tw-post { padding: 12px 16px; border-bottom: 1px solid #2f3336; }
+.tw-post-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 13px; }
+.tw-post-name { font-weight: 500; }
+.tw-post-handle { color: #71767b; }
+.tw-post-time { color: #71767b; }
+.tw-post-body { color: #e7e9ea; font-size: 14px; line-height: 1.4; margin-bottom: 8px; }
+.tw-post-stats { display: flex; gap: 24px; color: #71767b; font-size: 12px; }
+.tw-warning { padding: 10px 16px; background: rgba(192,57,43,0.1); border-top: 1px solid rgba(192,57,43,0.3); color: #ff7b6b; font-size: 11px; }
+
+/* Chat app mockup */
+.chat-app { background: #0d1418; font-family: 'IBM Plex Mono', monospace; font-size: 13px; max-height: 380px; }
+.chat-header { background: #1a2530; padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a3540; }
+.chat-app-icon { width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #6a3eb5 0%, #2c1f5a 100%); display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', cursive; color: #c8a96e; font-size: 14px; }
+.chat-title { color: #e8e0d0; font-weight: 500; font-size: 14px; }
+.chat-sub { color: #888; font-size: 11px; }
+.chat-body { padding: 12px 16px; max-height: 280px; overflow-y: auto; }
+.chat-day { text-align: center; color: #666; font-size: 10px; margin: 12px 0; letter-spacing: 0.1em; }
+.chat-msg { margin-bottom: 10px; max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
+.chat-msg.them { background: #2a3540; color: #e8e0d0; border-bottom-left-radius: 2px; }
+.chat-msg.me { background: #6a3eb5; color: #fff; margin-left: auto; border-bottom-right-radius: 2px; }
+.chat-time { font-size: 9px; color: #666; margin-top: 2px; }
+.chat-msg.them + .chat-time { text-align: left; }
+.chat-msg.me + .chat-time { text-align: right; }
+.chat-final { background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.4); padding: 8px 12px; border-radius: 12px; color: #ff7b6b !important; }
+
+/* Screenshot printout */
+.printout { background: #f4f1e8; padding: 20px; color: #2a2a2a; font-family: 'IBM Plex Mono', monospace; }
+.printout-stamp { display: inline-block; border: 2px solid #c0392b; color: #c0392b; padding: 4px 10px; font-size: 10px; transform: rotate(-3deg); letter-spacing: 0.15em; margin-bottom: 12px; font-family: 'Special Elite', cursive; }
+.printout-content { background: #fff; padding: 12px; border: 1px solid #ccc; }
+.printout-tw { background: #fff; }
+.printout-meta { font-size: 10px; color: #666; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; }
+.printout-meta strong { color: #2a2a2a; }
+.printout-annotation { font-family: 'Special Elite', cursive; color: #c0392b; font-size: 12px; margin-top: 8px; transform: rotate(-1deg); display: inline-block; }
+
+/* Logbook page */
+.logbook { background: #f8f5e8; padding: 16px 20px; font-family: 'Special Elite', cursive; color: #2a2a2a; }
+.logbook-title { text-align: center; font-size: 13px; letter-spacing: 0.15em; margin-bottom: 4px; }
+.logbook-subtitle { text-align: center; font-size: 10px; color: #888; margin-bottom: 16px; font-family: 'IBM Plex Mono', monospace; }
+.logbook-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.logbook-table th { text-align: left; border-bottom: 2px solid #2a2a2a; padding: 6px 4px; font-size: 10px; letter-spacing: 0.1em; }
+.logbook-table td { padding: 8px 4px; border-bottom: 1px solid #ccc; }
+.logbook-table tr.highlight { background: rgba(200,169,110,0.3); }
+.logbook-table tr.highlight td { font-weight: 500; }
+
+/* CCTV terminal */
+.cctv-screen { background: #000; padding: 16px; font-family: 'IBM Plex Mono', monospace; }
+.cctv-header { color: #1d9e75; font-size: 11px; margin-bottom: 12px; display: flex; justify-content: space-between; }
+.cctv-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #c0392b; margin-right: 6px; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0.3} }
+.cctv-feed { background: #0a0a0a; border: 1px solid #1d9e75; padding: 12px; font-size: 11px; color: #1d9e75; line-height: 1.6; }
+.cctv-feed pre { font-family: 'IBM Plex Mono', monospace; font-size: 11px; white-space: pre-wrap; }
+.cctv-line { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed rgba(29,158,117,0.2); }
+.cctv-line.alert { color: #ff7b6b; }
+
+/* Terminal log */
+.terminal-log { background: #000; padding: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #1d9e75; line-height: 1.6; max-height: 320px; overflow-y: auto; }
+.terminal-prompt { color: #c8a96e; }
+.terminal-output { color: #e8e0d0; }
+.terminal-warn { color: #ff7b6b; }
+.terminal-info { color: #7fb3d3; }
+.terminal-comment { color: #666; font-style: italic; }
+
+/* EXIF metadata viewer */
+.exif-viewer { background: #1a1a1a; padding: 16px; }
+.exif-photo { background: linear-gradient(135deg, #2a3148 0%, #1a1f2e 100%); height: 180px; border-radius: 4px; position: relative; margin-bottom: 12px; overflow: hidden; }
+.exif-photo::before { content: ''; position: absolute; bottom: 30px; left: 30%; width: 40%; height: 80px; background: rgba(212,168,134,0.3); border-radius: 50% 50% 0 0; }
+.exif-photo::after { content: ''; position: absolute; top: 40px; left: 45%; width: 30px; height: 30px; background: rgba(44,24,16,0.5); border-radius: 50%; }
+.exif-photo-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); font-family: 'Special Elite', cursive; font-size: 10px; letter-spacing: 0.2em; }
+.exif-data { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.exif-row { display: flex; padding: 6px 0; border-bottom: 1px solid #2a2a2a; }
+.exif-row:last-child { border-bottom: none; }
+.exif-key { color: #888; width: 130px; flex-shrink: 0; }
+.exif-val { color: #e8e0d0; }
+.exif-val.alert { color: #ff7b6b; }
+.exif-val.match { color: #1d9e75; }
+
+/* Notebook page */
+.notebook-page { background: #fff8d8; padding: 24px; position: relative; font-family: 'Special Elite', cursive; color: #2a2a2a; }
+.notebook-page::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 1px; background: #c0392b; opacity: 0.5; }
+.notebook-page::after { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: repeating-linear-gradient(180deg, transparent, transparent 23px, rgba(127,179,211,0.2) 23px, rgba(127,179,211,0.2) 24px); pointer-events: none; }
+.notebook-tear { position: absolute; top: 0; left: 0; right: 0; height: 12px; background: linear-gradient(180deg, transparent 0%, transparent 50%, #fff8d8 50%); clip-path: polygon(0 100%, 5% 60%, 10% 100%, 15% 50%, 22% 100%, 28% 70%, 35% 100%, 42% 50%, 48% 100%, 55% 60%, 62% 100%, 70% 50%, 78% 100%, 85% 60%, 92% 100%, 100% 70%); background: #fff8d8; }
+.notebook-content { padding-left: 30px; line-height: 2; font-size: 16px; position: relative; z-index: 2; }
+.notebook-line { display: block; }
+.notebook-stamp { position: absolute; top: 12px; right: 16px; transform: rotate(8deg); border: 2px solid #c0392b; color: #c0392b; padding: 4px 10px; font-size: 10px; letter-spacing: 0.1em; font-family: 'Special Elite', cursive; }
+
+/* Network registry table */
+.netreg { background: #0a0a0a; padding: 16px; font-family: 'IBM Plex Mono', monospace; }
+.netreg-title { color: #c8a96e; font-size: 11px; letter-spacing: 0.15em; margin-bottom: 12px; }
+.netreg-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+.netreg-table th { text-align: left; color: #888; padding: 6px 8px; border-bottom: 1px solid #2a2a2a; font-weight: normal; font-size: 10px; letter-spacing: 0.1em; }
+.netreg-table td { color: #e8e0d0; padding: 6px 8px; border-bottom: 1px solid #1a1a1a; }
+.netreg-table tr.match td { background: rgba(192,57,43,0.1); color: #ff7b6b; }
+.netreg-table tr.match td:first-child::before { content: '▸ '; color: #ff7b6b; }
+
+/* Discord-style chat */
+.discord { background: #1e1f22; font-family: 'IBM Plex Mono', monospace; }
+.discord-header { background: #2b2d31; padding: 10px 16px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 10px; }
+.discord-hash { color: #888; font-size: 16px; }
+.discord-channel { color: #f2f3f5; font-weight: 500; font-size: 13px; }
+.discord-msg-list { padding: 12px 16px; max-height: 300px; overflow-y: auto; }
+.discord-msg { display: flex; gap: 12px; margin-bottom: 12px; }
+.discord-avatar { width: 32px; height: 32px; border-radius: 50%; background: #c0392b; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-family: 'Special Elite', cursive; }
+.discord-content { flex: 1; }
+.discord-author { color: #f2f3f5; font-weight: 500; font-size: 13px; }
+.discord-time { color: #888; font-size: 10px; margin-left: 6px; }
+.discord-text { color: #dbdee1; font-size: 13px; line-height: 1.4; margin-top: 2px; }
+.discord-text.flag { color: #ff7b6b; font-weight: 500; }
+
+</style>
+</head>
+<body>
+
+<div id="title-screen" class="screen active">
+  <p class="title-badge">Universiti Teknologi Nusantara · Digital Forensics Division</p>
+  <h1 class="title-main">The Ghost of<br>Harlow Hall</h1>
+  <div class="title-divider"></div>
+  <p class="title-sub">A Digital Forensic Investigation</p>
+  <div class="case-file">
+    <div class="case-file-label">Case File · UTN-2024-0441</div>
+    <p>A student's identity has been stolen. A fake social media account bearing her name is spreading lies across campus. The real perpetrator is hiding in the data. You have been assigned to find them.</p>
+  </div>
+  <button class="btn-start" onclick="startGame()">Begin Investigation</button>
+</div>
+
+<div id="game-screen" class="screen">
+  <aside class="sidebar">
+    <div class="sidebar-title">Locations</div>
+    <div id="location-nav"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Evidence Collected</div>
+      <div id="evidence-sidebar"></div>
+    </div>
+  </aside>
+  <div class="scene-area">
+    <div class="scene-header">
+      <span class="scene-location" id="scene-location-title">—</span>
+      <span class="scene-progress" id="scene-progress">—</span>
+    </div>
+    <div class="scene-main" id="scene-main"></div>
+  </div>
+</div>
+
+<div id="verdict-screen" class="screen">
+  <div class="verdict-board">
+    <h2 class="verdict-title">Final Verdict</h2>
+    <p class="verdict-sub">Review the evidence. Name your suspect.</p>
+    <div class="evidence-summary">
+      <div class="evidence-summary-title">Evidence on Record</div>
+      <div class="evidence-list" id="verdict-evidence-list"></div>
+    </div>
+    <div class="suspect-grid">
+      <div class="suspect-card" onclick="selectSuspect('faiz', event)">
+        <div class="suspect-initial" style="background:rgba(127,179,211,0.15);color:#7fb3d3;">FH</div>
+        <div class="suspect-name">Faiz Hairuddin</div>
+        <div class="suspect-desc">3rd year · ex-admirer of Nadia</div>
+      </div>
+      <div class="suspect-card" onclick="selectSuspect('liyana', event)">
+        <div class="suspect-initial" style="background:rgba(200,169,110,0.15);color:#c8a96e;">LS</div>
+        <div class="suspect-name">Liyana Suffian</div>
+        <div class="suspect-desc">3rd year · academic rival</div>
+      </div>
+      <div class="suspect-card" onclick="selectSuspect('darren', event)">
+        <div class="suspect-initial" style="background:rgba(192,57,43,0.15);color:#c0392b;">DK</div>
+        <div class="suspect-name">Darren Koh</div>
+        <div class="suspect-desc">2nd year · online connection</div>
+      </div>
+    </div>
+    <button class="btn-verdict" id="verdict-btn" onclick="submitVerdict()" disabled>Submit Case Report</button>
+  </div>
+</div>
+
+<div id="ending-screen" class="screen">
+  <div class="ending-icon" id="ending-icon">🔍</div>
+  <h2 class="ending-title" id="ending-title">—</h2>
+  <p class="ending-body" id="ending-body">—</p>
+  <div class="score-box">
+    <div class="score-label">Case Score</div>
+    <div class="score-value" id="ending-score" style="color:var(--accent)">—</div>
+  </div>
+  <br>
+  <button class="btn-replay" onclick="location.reload()">Restart Investigation</button>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-type" id="modal-type"></div>
+        <div class="modal-title" id="modal-title"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script>
+const state = { currentLocation: 0, evidence: [], dialogueProgress: {}, ethicalFlagged: false, ethicalHandled: false, score: 100, selectedSuspect: null, locationsDone: [false, false, false, false, false] };
+
+const locations = [
+  {
+    id: 'victims-room',
+    name: "Nadia's Dorm Room",
+    subtitle: 'Block A · Room 108',
+    description: "The room is tidy but clearly belongs to someone stressed. A laptop sits open on the desk, a phone next to it, and a printed screenshot is pinned to the noticeboard above. Nadia stands by the window, arms crossed.",
+    sceneClass: 'scene-dorm-nadia',
+    sceneHTML: `
+      <div class="wall-pattern"></div>
+      <div class="window"><div class="window-stars"></div></div>
+      <div class="poster-n poster-1"></div>
+      <div class="poster-n poster-2"></div>
+      <div class="poster-n poster-3"></div>
+      <div class="noticeboard">
+        <div class="noticeboard-paper"></div>
+        <div class="noticeboard-paper"></div>
+        <div class="noticeboard-paper"></div>
+        <div class="noticeboard-paper"></div>
+      </div>
+      <div class="floor-rug"></div>
+      <div class="bed">
+        <div class="bed-blanket"></div>
+        <div class="pillow pillow-1"></div>
+        <div class="pillow pillow-2"></div>
+        <div class="plushie"></div>
+      </div>
+      <div class="desk-chair"></div>
+      <div class="desk"></div>
+      <div class="desk-leg desk-leg-1"></div>
+      <div class="desk-leg desk-leg-2"></div>
+      <div class="pc-monitor"></div>
+      <div class="laptop-table"></div>
+      <div class="pc-keyboard"></div>
+      <div class="nadia-char">
+        <div class="hair"></div>
+        <div class="head"></div>
+        <div class="brow-l"></div>
+        <div class="brow-r"></div>
+        <div class="eye-l"></div>
+        <div class="eye-r"></div>
+        <div class="mouth"></div>
+        <div class="sweat"></div>
+        <div class="body"></div>
+        <div class="arm-l"></div>
+        <div class="arm-r"></div>
+        <div class="phone-held"></div>
+        <div class="leg-l"></div>
+        <div class="leg-r"></div>
+        <div class="foot-l"></div>
+        <div class="foot-r"></div>
+      </div>
+    `,
+    hotspots: [
+      { id: 'ev-laptop', class: 'hs-laptop', label: "Nadia's laptop",
+        evidence: { id: 'ev-laptop', label: 'Fake account log', short: 'Fake account' },
+        modal: { type: 'Digital Evidence', title: 'Fake profile — @nadia.razali.real',
+          body: `<div class="ev-container"><div class="tw-profile">
+      <div class="tw-header"><div class="tw-avatar">N</div></div>
+      <div class="tw-info">
+        <div class="tw-name">The Real Nadia <span class="tw-verified">FAKE</span></div>
+        <div class="tw-handle">@nadia.razali.real · Created 14 days ago</div>
+        <div class="tw-bio">The real Nadia — exposing the truth they don\'t want you to see.</div>
+        <div class="tw-meta">📍 UTN Campus · Joined this month</div>
+      </div>
+      <div class="tw-stats"><span><strong>47</strong> Following</span><span><strong>312</strong> Followers</span></div>
+      <div class="tw-tab-bar"><div class="tw-tab active">Posts</div><div class="tw-tab">Replies</div><div class="tw-tab">Media</div></div>
+      <div class="tw-post">
+        <div class="tw-post-header"><span class="tw-post-name">The Real Nadia</span><span class="tw-post-handle">@nadia.razali.real</span><span class="tw-post-time">· 3d</span></div>
+        <div class="tw-post-body">Can\'t believe I said all those things to Prof. Azri. Guess the truth always comes out 🤷‍♀️</div>
+        <div class="tw-post-stats"><span>💬 89</span><span>🔁 47</span><span>❤️ 134</span><span>🕐 11:48 PM</span></div>
+      </div>
+      <div class="tw-warning">⚠ Account flagged for impersonation. Creation IP unavailable on user-side — full network logs require IT department access.</div>
+    </div></div><p>Nadia denies writing any of these posts. The account is clearly built to mimic her — same name, similar photo. You\'ll need to trace the creation IP through the IT department.</p>` } },
+      { id: 'ev-phone', class: 'hs-phone-n', label: "Nadia's phone",
+        evidence: { id: 'ev-phone', label: 'Gaming app chat log', short: 'Chat log' },
+        modal: { type: 'Digital Evidence', title: 'GuildChat — anonymous user "D_Koh_88"',
+          body: `<div class="ev-container"><div class="chat-app">
+      <div class="chat-header">
+        <div class="chat-app-icon">G</div>
+        <div><div class="chat-title">D_Koh_88</div><div class="chat-sub">GuildChat · Last seen 3 months ago</div></div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">— SIX WEEKS AGO —</div>
+        <div class="chat-msg them">Hey, you\'re really good at this game. Been watching you play for a while.</div>
+        <div class="chat-time">10:42 PM</div>
+        <div class="chat-msg me">Thanks! Do I know you?</div>
+        <div class="chat-time">10:44 PM</div>
+        <div class="chat-msg them">Just a fan. We could play together sometime?</div>
+        <div class="chat-time">10:45 PM</div>
+        <div class="chat-day">— THREE MONTHS AGO —</div>
+        <div class="chat-msg me">Wait... you\'re Darren? From CS-2? I thought you were just an online friend.</div>
+        <div class="chat-time">9:18 PM</div>
+        <div class="chat-msg them">Does it matter who I am?</div>
+        <div class="chat-time">9:21 PM</div>
+        <div class="chat-msg me">I\'m sorry. I think we should stop talking. This feels weird now.</div>
+        <div class="chat-time">9:25 PM</div>
+        <div class="chat-msg them chat-final">You\'re going to regret making me invisible.</div>
+        <div class="chat-time">9:31 PM</div>
+      </div>
+    </div></div><p>The username "D_Koh_88" — same naming pattern as the fake account email later traced from Darren\'s laptop. The pattern of obsession-then-rejection-then-threat is consistent across the timeline.</p>` } },
+      { id: 'ev-printout', class: 'hs-printout', label: 'Printed screenshot',
+        evidence: { id: 'ev-printout', label: 'Screenshot printout', short: 'Screenshot' },
+        modal: { type: 'Physical Evidence', title: 'Screenshot — timestamp analysis',
+          body: `<div class="ev-container"><div class="printout">
+      <div class="printout-stamp">VICTIM EXHIBIT 01</div>
+      <div class="printout-content">
+        <div style="background:#000;color:#e7e9ea;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;border-radius:3px">
+          <div style="font-weight:500">The Real Nadia <span style="color:#888">@nadia.razali.real</span> · 3d</div>
+          <div style="margin:6px 0">Can\'t believe I said all those things to Prof. Azri. Guess the truth always comes out 🤷‍♀️</div>
+          <div style="color:#888;font-size:10px">11:48 PM · Tuesday · Twitter for Web</div>
+        </div>
+        <div class="printout-meta">
+          <div><strong>Captured:</strong> 12:02 AM Wednesday (within 14 minutes of posting)</div>
+          <div><strong>Captured by:</strong> Nadia Razali (victim)</div>
+          <div><strong>Post timestamp:</strong> 23:48:14 Tuesday</div>
+        </div>
+      </div>
+      <div class="printout-annotation">↗ this is when my study group meets!!</div>
+    </div></div><p>Nadia\'s annotation is the key. Tuesday 11:48 PM is during her regular study group session in the library — meaning the perpetrator knew her routine and posted while she was guaranteed to be away from her room.</p>` } },
+    ],
+    npc: { id: 'nadia', name: 'Nadia Razali', role: 'Victim · Computer Science, Year 3', avatar: 'NR',
+      avatarBg: 'rgba(200,169,110,0.2)', avatarColor: '#c8a96e',
+      intro: "Thank you for coming. I've been trying to get someone to listen for three days. I have suspicions but no proof — that's your job.",
+      questions: [
+        { id: 'q1', text: 'Who has access to your daily schedule?', response: "My timetable is on the university portal. But my study group schedule? Only people in my circle knew about Tuesday nights. Faiz used to be in that group before things got awkward." },
+        { id: 'q2', text: 'Tell me about Faiz Hairuddin.', response: "He confessed his feelings six months ago. I turned him down gently. He seemed to accept it, but lately I've seen him watching me across the library. I don't think it's him though — it doesn't feel like him." },
+        { id: 'q3', text: 'Who is D_Koh_88?', response: "That username creeped me out the most. We talked for weeks on GuildWars Online before I realised I didn't actually know this person. When I found out it was a younger student named Darren, I stopped responding. He didn't take it well." },
+      ] },
+    unlockMessage: 'Victim interview complete. The library has been unlocked.',
+  },
+  {
+    id: 'library',
+    name: 'University Library',
+    subtitle: 'Academic Block · Ground Floor',
+    description: "Quiet at this hour. Rows of bookshelves line the walls, a study desk in the centre under a warm reading lamp. The sign-in logbook sits on the desk, and a CCTV terminal is mounted in the upper corner along with the Wi-Fi access point.",
+    sceneClass: 'scene-library',
+    sceneHTML: `
+      <div class="shelf shelf-1">
+        <div class="shelf-row"><div class="book" style="background:#c0392b"></div><div class="book" style="background:#1565c0"></div><div class="book" style="background:#2e7d32"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#6a1b9a"></div><div class="book" style="background:#00695c"></div><div class="book" style="background:#bf360c"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#e65100"></div><div class="book" style="background:#0d47a1"></div><div class="book" style="background:#4a148c"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#bf360c"></div><div class="book" style="background:#f57f17"></div><div class="book" style="background:#1565c0"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#1b5e20"></div><div class="book" style="background:#c0392b"></div><div class="book" style="background:#33691e"></div></div>
+      </div>
+      <div class="shelf shelf-2">
+        <div class="shelf-row"><div class="book" style="background:#1b5e20"></div><div class="book" style="background:#0d47a1"></div><div class="book" style="background:#4a148c"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#c0392b"></div><div class="book" style="background:#1565c0"></div><div class="book" style="background:#f57f17"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#6a1b9a"></div><div class="book" style="background:#bf360c"></div><div class="book" style="background:#1b5e20"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#e65100"></div><div class="book" style="background:#4a148c"></div><div class="book" style="background:#33691e"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#0d47a1"></div><div class="book" style="background:#2e7d32"></div><div class="book" style="background:#c0392b"></div></div>
+      </div>
+      <div class="shelf shelf-3">
+        <div class="shelf-row"><div class="book" style="background:#4a148c"></div><div class="book" style="background:#c0392b"></div><div class="book" style="background:#1565c0"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#2e7d32"></div><div class="book" style="background:#6a1b9a"></div><div class="book" style="background:#f57f17"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#bf360c"></div><div class="book" style="background:#1b5e20"></div><div class="book" style="background:#0d47a1"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#f57f17"></div><div class="book" style="background:#c0392b"></div><div class="book" style="background:#4a148c"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#1565c0"></div><div class="book" style="background:#33691e"></div><div class="book" style="background:#6a1b9a"></div></div>
+      </div>
+      <div class="shelf shelf-4">
+        <div class="shelf-row"><div class="book" style="background:#1565c0"></div><div class="book" style="background:#c0392b"></div><div class="book" style="background:#2e7d32"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#bf360c"></div><div class="book" style="background:#1b5e20"></div><div class="book" style="background:#6a1b9a"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#f57f17"></div><div class="book" style="background:#0d47a1"></div><div class="book" style="background:#4a148c"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#c0392b"></div><div class="book" style="background:#33691e"></div><div class="book" style="background:#1565c0"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#2e7d32"></div><div class="book" style="background:#bf360c"></div><div class="book" style="background:#e65100"></div></div>
+      </div>
+      <div class="shelf shelf-5">
+        <div class="shelf-row"><div class="book" style="background:#6a1b9a"></div><div class="book" style="background:#1565c0"></div><div class="book" style="background:#f57f17"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#2e7d32"></div><div class="book" style="background:#c0392b"></div><div class="book" style="background:#0d47a1"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#1b5e20"></div><div class="book" style="background:#4a148c"></div><div class="book" style="background:#bf360c"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#0d47a1"></div><div class="book" style="background:#f57f17"></div><div class="book" style="background:#1b5e20"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#c0392b"></div><div class="book" style="background:#6a1b9a"></div><div class="book" style="background:#2e7d32"></div></div>
+      </div>
+      <div class="shelf shelf-6">
+        <div class="shelf-row"><div class="book" style="background:#0d47a1"></div><div class="book" style="background:#bf360c"></div><div class="book" style="background:#1b5e20"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#4a148c"></div><div class="book" style="background:#2e7d32"></div><div class="book" style="background:#c0392b"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#f57f17"></div><div class="book" style="background:#1565c0"></div><div class="book" style="background:#6a1b9a"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#33691e"></div><div class="book" style="background:#c0392b"></div><div class="book" style="background:#0d47a1"></div></div>
+        <div class="shelf-row"><div class="book" style="background:#e65100"></div><div class="book" style="background:#4a148c"></div><div class="book" style="background:#f57f17"></div></div>
+      </div>
+      <div class="uni-sign">
+        <div class="uni-sign-name">UNIVERSITI TEKNOLOGI<br>NUSANTARA</div>
+        <div class="uni-sign-divider"></div>
+        <div class="uni-sign-sub">LIBRARY & KNOWLEDGE CENTRE</div>
+      </div>
+      <div class="desk-lib"></div>
+      <div class="desk-front-panel"></div>
+      <div class="lamp-lib"></div>
+      <div class="logbook-obj"></div>
+      <div class="computer-desk"></div>
+      <div class="librarian">
+        <div class="hijab"></div>
+        <div class="hijab-drape"></div>
+        <div class="head"></div>
+        <div class="eye-l"></div>
+        <div class="eye-r"></div>
+        <div class="mouth"></div>
+        <div class="body"></div>
+        <div class="arm-l"></div>
+        <div class="arm-r"></div>
+        <div class="leg-l"></div>
+        <div class="leg-r"></div>
+      </div>
+    `,
+    hotspots: [
+      { id: 'ev-logbook', class: 'hs-logbook', label: 'Sign-in logbook',
+        evidence: { id: 'ev-logbook', label: 'Library sign-in log', short: 'Sign-in log' },
+        modal: { type: 'Physical Evidence', title: 'Circulation desk — sign-in register',
+          body: `<div class="ev-container"><div class="logbook">
+      <div class="logbook-title">UTN LIBRARY · NIGHT REGISTER</div>
+      <div class="logbook-subtitle">Tuesday, 23rd · Page 4</div>
+      <table class="logbook-table">
+        <thead><tr><th>Name</th><th>Student ID</th><th>Time In</th><th>Time Out</th></tr></thead>
+        <tbody>
+          <tr><td>S. Aminah</td><td>2021-LW-018</td><td>20:15</td><td>22:30</td></tr>
+          <tr><td>R. Devan</td><td>2022-EE-094</td><td>21:00</td><td>23:15</td></tr>
+          <tr class="highlight"><td>Faiz Hairuddin</td><td>2022-CS-038</td><td>21:42</td><td>00:15+</td></tr>
+          <tr><td>Liyana Suffian</td><td>2022-CS-041</td><td>21:45</td><td>22:50</td></tr>
+          <tr><td>K. Tan</td><td>2023-CS-112</td><td>22:30</td><td>23:45</td></tr>
+          <tr><td>M. Iqbal</td><td>2021-EE-007</td><td>22:55</td><td>00:30+</td></tr>
+        </tbody>
+      </table>
+    </div></div><p>Faiz was physically present from 9:42 PM until 12:15 AM — over a full hour past the 11:48 PM fake post timestamp. His handwriting is verified by the assistant. <strong>Physical alibi confirmed.</strong></p><p>However, library guest Wi-Fi reaches outside the building. Proximity to the network doesn\'t rule out remote actors.</p>` } },
+      { id: 'ev-cctv', class: 'hs-cctv', label: 'CCTV camera',
+        innerHTML: '<div class="lens"></div><div class="rec-light"></div><div class="mount-arm"></div>',
+        evidence: { id: 'ev-cctv', label: 'CCTV timestamp record', short: 'CCTV log' },
+        modal: { type: 'Digital Evidence', title: 'CCTV system — motion log',
+          body: `<div class="ev-container"><div class="cctv-screen">
+      <div class="cctv-header"><span><span class="cctv-status"></span>REC · LIVE FEED</span><span>CAM-04 LIB-ENT</span></div>
+      <div class="cctv-feed">
+<div class="cctv-line">21:41:08 ENTER · M-30s · cap+backpack</div>
+<div class="cctv-line">21:42:30 SIGN-IN logged: Hairuddin, F.</div>
+<div class="cctv-line">22:15:44 EXIT-RETURN · briefly to vending</div>
+<div class="cctv-line">22:18:02 ENTER · same subject</div>
+<div class="cctv-line">23:30:15 STATIONARY · corner desk</div>
+<div class="cctv-line alert">23:39:21 ⚠ NEW DEVICE on guest AP: "REDMI-DK-GUEST"</div>
+<div class="cctv-line alert">23:39:21    └ Signal origin: 47m N/NE of building</div>
+<div class="cctv-line alert">23:39:21    └ Outside CCTV coverage zone</div>
+<div class="cctv-line">23:48:14 ⚠ Twitter API: post created from this AP</div>
+<div class="cctv-line">00:02:11 DEVICE DISCONNECT: REDMI-DK-GUEST</div>
+<div class="cctv-line">00:14:33 EXIT · subject: Hairuddin, F.</div>
+<div class="cctv-line">00:15:02 SIGN-OUT logged</div>
+      </div>
+    </div></div><p>The CCTV log creates two separate timelines — Faiz inside the library throughout, and an unidentified device connected to the library guest Wi-Fi from <strong>outside</strong> the building, 47 metres to the north. The fake post was created during that outside connection.</p>` } },
+      { id: 'ev-wifilog', class: 'hs-wifilog label-anchor-right', label: 'Wi-Fi access point',
+        innerHTML: '<div class="ap-antenna-l"></div><div class="ap-antenna-r"></div><div class="ap-signal-2"></div><div class="ap-signal-1"></div><div class="ap-label">UTN-AP-04</div>',
+        evidence: { id: 'ev-wifilog', label: 'Guest Wi-Fi device log', short: 'Wi-Fi log' },
+        modal: { type: 'Digital Evidence', title: 'Library AP — guest device connections',
+          body: `<div class="ev-container"><div class="terminal-log">
+<span class="terminal-prompt">root@utn-lib-ap04:~$ </span><span class="terminal-output">grep -i "tuesday" /var/log/guest-wifi.log | sort -k2</span>
+<span class="terminal-comment"># Guest network associations · Tuesday 23rd</span>
+<span class="terminal-info">21:08:42</span> ASSOC iPhone-Aminah         ··· 192.168.44.018  signal:-42dB
+<span class="terminal-info">21:33:15</span> ASSOC MacBook-Devan         ··· 192.168.44.094  signal:-38dB
+<span class="terminal-info">21:50:08</span> ASSOC Liyana-Galaxy         ··· 192.168.44.041  signal:-44dB
+<span class="terminal-info">22:14:52</span> ASSOC iPad-Tan-K            ··· 192.168.44.112  signal:-40dB
+<span class="terminal-info">22:30:11</span> ASSOC Iqbal-Phone           ··· 192.168.44.007  signal:-46dB
+<span class="terminal-warn">23:39:21</span> <span class="terminal-warn">ASSOC REDMI-DK-GUEST       ··· 192.168.44.201  signal:-72dB ⚠</span>
+<span class="terminal-comment">             └ weak signal · device estimated 40-60m from AP</span>
+<span class="terminal-comment">             └ direction: bearing 020° (N/NE) — toward Dorm Block C</span>
+<span class="terminal-info">00:02:11</span> DISASSOC REDMI-DK-GUEST    ··· session 23m04s
+<span class="terminal-warn">                                               ⚠ NO REPEAT · single session only</span>
+
+<span class="terminal-prompt">root@utn-lib-ap04:~$ </span><span class="terminal-output">whois MAC=A8:7D:12:DK:88:21</span>
+<span class="terminal-info">Device:</span> Xiaomi Redmi Note 12
+<span class="terminal-info">Type:</span> mobile/personal hotspot capable
+<span class="terminal-info">Self-registered as guest:</span> 21 days ago
+    </div></div><p>The "REDMI-DK-GUEST" device is the smoking gun — a single session connection from a weak signal location 40–60m north of the library, exactly when the fake post went live. The bearing points directly to Dorm Block C.</p>` } },
+    ],
+    npc: { id: 'librarian', name: 'Cik Rosnah', role: 'Library Assistant · Night shift', avatar: 'CR',
+      avatarBg: 'rgba(127,179,211,0.15)', avatarColor: '#7fb3d3',
+      intro: "I've been on the night shift for three years. I remember most of the regulars. What do you need to know?",
+      questions: [
+        { id: 'lq1', text: 'Was Faiz Hairuddin here last Tuesday night?', response: "Yes, he's here almost every Tuesday. Quiet boy, takes the corner seat. He asked me to refill the printer paper around midnight — I remember." },
+        { id: 'lq2', text: 'Did you notice anyone unusual outside the library?', response: "Around 11:30 I stepped out and saw someone sitting on the bench near Block C — on a laptop. Hood up, couldn't see the face." },
+        { id: 'lq3', text: 'Can students access the library Wi-Fi from outside?', response: "Guest network reaches 50 or 60 metres. Students do it all the time. No login required for guest access — we've been asking IT to fix that." },
+      ] },
+    unlockMessage: "Faiz's alibi confirmed. Darren's dorm room has been unlocked.",
+  },
+  {
+    id: 'darren-dorm',
+    name: "Darren's Dorm Room",
+    subtitle: 'Block C · Room 214',
+    description: "Sparse and chaotic. A dual-monitor gaming rig dominates the desk, a phone charging beside it, a torn notebook page peeking out from under textbooks. A 'GAME OVER' poster hangs on the wall. Darren slouches in his gaming chair, watching you carefully.",
+    sceneClass: 'scene-dorm-darren',
+    sceneHTML: `
+      <div class="poster-d"></div>
+      <div class="poster-mario"></div>
+      <div class="poster-zelda"></div>
+      <div class="poster-pokemon"></div>
+      <div class="window-d"><div class="window-d-stars"></div></div>
+      <div class="dartboard"></div>
+      <div class="dart"></div>
+      <div class="bed-d">
+        <div class="bed-d-blanket"></div>
+        <div class="pillow-d-1"></div>
+        <div class="pillow-d-2"></div>
+      </div>
+      <div class="desk-d"></div>
+      <div class="desk-leg-d desk-leg-d-1"></div>
+      <div class="desk-leg-d desk-leg-d-2"></div>
+      <div class="monitor monitor-1"><div class="monitor-screen"></div></div>
+      <div class="monitor monitor-2"><div class="monitor-screen"></div></div>
+      <div class="monitor-stand monitor-stand-1"></div>
+      <div class="monitor-stand monitor-stand-2"></div>
+      <div class="keyboard"></div>
+      <div class="mouse"></div>
+      <div class="books-d"></div>
+      <div class="notebook-paper"></div>
+      <div class="desk-chair">
+        <div class="chair-back"></div>
+        <div class="chair-seat"></div>
+        <div class="chair-pole"></div>
+        <div class="chair-base"></div>
+        <div class="wheel wheel-l"></div>
+        <div class="wheel wheel-c"></div>
+        <div class="wheel wheel-r"></div>
+      </div>
+      <div class="darren-char">
+        <div class="hair"></div>
+        <div class="head"></div>
+        <div class="eye-l"></div>
+        <div class="eye-r"></div>
+        <div class="body"></div>
+        <div class="arm-l"></div>
+        <div class="arm-r"></div>
+        <div class="phone-held"></div>
+        <div class="legs"></div>
+      </div>
+    `,
+    hotspots: [
+      { id: 'ev-monitor', class: 'hs-monitor-d', label: 'Gaming monitor',
+        evidence: { id: 'ev-monitor', label: 'Browser history — fake account', short: 'Browser history' },
+        modal: { type: 'Digital Evidence', title: 'Desktop activity — browser history',
+          body: `<div class="ev-container"><div class="terminal-log">
+<span class="terminal-prompt">forensics@utn:~$ </span><span class="terminal-output">cat browser_history.db | filter "twitter" | sort -date</span>
+
+<span class="terminal-comment"># Chrome history · last 30 days · filtered: twitter.com</span>
+<span class="terminal-warn">─────────────────────────────────────────────────────────</span>
+<span class="terminal-info">Tue 23rd  23:31:22</span>  twitter.com/login
+<span class="terminal-info">Tue 23rd  23:32:08</span>  twitter.com/i/flow/login → SUCCESS
+<span class="terminal-info">Tue 23rd  23:32:11</span>  twitter.com/home  <span class="terminal-comment">(account: nadia.razali.real)</span>
+<span class="terminal-warn">Tue 23rd  23:39:44</span>  twitter.com/compose/post
+<span class="terminal-warn">Tue 23rd  23:48:14</span>  twitter.com/post/created  <span class="terminal-warn">⚠ POST PUBLISHED</span>
+<span class="terminal-info">Tue 23rd  23:49:01</span>  twitter.com/nadia.razali.real
+<span class="terminal-info">Tue 23rd  23:54:33</span>  twitter.com/settings/account
+<span class="terminal-info">Wed 24th  00:02:08</span>  twitter.com/logout
+
+<span class="terminal-comment"># Pattern: same routine on previous Tuesdays</span>
+<span class="terminal-info">Tue 16th  23:14-00:11</span>  twitter (24min session)
+<span class="terminal-info">Tue 9th   23:08-23:55</span>  twitter (47min session)
+<span class="terminal-info">Tue 2nd   22:58-00:23</span>  twitter (account creation)
+
+<span class="terminal-prompt">forensics@utn:~$ </span><span class="terminal-output">cat browser_logins.db | last</span>
+<span class="terminal-info">Active session:</span> <span class="terminal-warn">dnkoh.secret88@gmail.com</span>
+<span class="terminal-info">Synced devices:</span> "Darren-PC", "REDMI-DK"
+<span class="terminal-info">Last sync:</span> 3 nights ago
+    </div></div><p>The browser was never cleared. Three consecutive Tuesdays show the same pattern — login, compose, publish, logout — all between 11 PM and midnight. The Gmail account "dnkoh.secret88" matches the "D_Koh_88" username from Nadia\'s gaming app.</p>` } },
+      { id: 'ev-phone-metadata', class: 'hs-phone-d', label: "Darren's phone",
+        evidence: { id: 'ev-phone-metadata', label: 'Photo GPS metadata', short: 'GPS metadata' },
+        modal: { type: 'Digital Evidence', title: 'Image EXIF data — photo posted to fake account',
+          body: `<div class="ev-container"><div class="exif-viewer">
+      <div class="exif-photo"><div class="exif-photo-overlay">IMG_20240423_232214.jpg</div></div>
+      <div class="exif-data">
+        <div class="exif-row"><span class="exif-key">Filename</span><span class="exif-val">IMG_20240423_232214.jpg</span></div>
+        <div class="exif-row"><span class="exif-key">Captured</span><span class="exif-val alert">23 Apr 2024 · 23:22:14</span></div>
+        <div class="exif-row"><span class="exif-key">Device</span><span class="exif-val match">Xiaomi Redmi Note 12</span></div>
+        <div class="exif-row"><span class="exif-key">Lens</span><span class="exif-val">f/1.9 · 5.81mm</span></div>
+        <div class="exif-row"><span class="exif-key">ISO</span><span class="exif-val">800</span></div>
+        <div class="exif-row"><span class="exif-key">GPS Latitude</span><span class="exif-val alert">2.9264° N</span></div>
+        <div class="exif-row"><span class="exif-key">GPS Longitude</span><span class="exif-val alert">101.6964° E</span></div>
+        <div class="exif-row"><span class="exif-key">GPS Match</span><span class="exif-val alert">UTN Block C · Floor 2 area</span></div>
+        <div class="exif-row"><span class="exif-key">Posted to</span><span class="exif-val alert">@nadia.razali.real · 23:48 (26 min later)</span></div>
+        <div class="exif-row"><span class="exif-key">Hash (SHA-256)</span><span class="exif-val" style="font-size:10px">a4f8e2c1b9d7f6e3...e8a1d2</span></div>
+      </div>
+    </div></div><p>The photo posted by the fake account contains intact EXIF metadata. The GPS coordinates pinpoint the capture location to Dorm Block C — Darren\'s building. Same device model that connected to the library Wi-Fi 17 minutes later.</p>` } },
+      { id: 'ev-notebook', class: 'hs-notebook-d', label: 'Torn notebook page',
+        evidence: { id: 'ev-notebook', label: 'Handwritten credential note', short: 'Written note' },
+        modal: { type: 'Physical Evidence', title: 'Notebook page — handwritten credentials',
+          body: `<div class="ev-container"><div class="notebook-page">
+      <div class="notebook-tear"></div>
+      <div class="notebook-stamp">PHYSICAL EXHIBIT 03</div>
+      <div class="notebook-content">
+        <span class="notebook-line">nadia_backup_acc</span>
+        <span class="notebook-line">pass: Nadia@2024</span>
+        <span class="notebook-line">alt: nadia.razali.real</span>
+        <span class="notebook-line" style="color:#c0392b">— twitter handle ✓</span>
+      </div>
+    </div></div><p>A torn page found under textbooks on Darren\'s desk. The handwriting matches notes elsewhere in the room. The third line — "nadia.razali.real" — is the <strong>exact username</strong> of the fake Twitter account. The password "Nadia@2024" suggests the perpetrator studied her naming patterns over their long online conversations.</p>` } },
+    ],
+    npc: { id: 'darren', name: 'Darren Koh', role: 'Suspect · Computer Science, Year 2', avatar: 'DK',
+      avatarBg: 'rgba(192,57,43,0.15)', avatarColor: '#c0392b',
+      intro: "I don't know why you're here. I barely know Nadia. We talked online a bit — that's it. Everyone games online.",
+      questions: [
+        { id: 'dq1', text: 'Where were you last Tuesday at 11:48 PM?', response: "Here. In my room. Gaming solo — no one to verify, I know. But I wasn't doing anything to Nadia." },
+        { id: 'dq2', text: 'Your device connected to the library Wi-Fi that night.', response: "...I might have gone out for a bit. I walk around at night sometimes. Sat near the library. That's not a crime. I just needed air." },
+        { id: 'dq3', text: 'We found "D_Koh_88" on Nadia\'s phone.', response: "That conversation was private. She misunderstood me. When she stopped talking I got frustrated. I sent ONE angry message. That doesn\'t mean I made a fake account." },
+      ] },
+    unlockMessage: 'Physical evidence secured. The IT Department has been unlocked.',
+  },
+  {
+    id: 'it-dept',
+    name: 'IT Department',
+    subtitle: 'Admin Block · Level 2',
+    description: "Server racks hum behind a glass partition. The network admin pulls up the university's management dashboard at your request — three terminals showing different log streams. This is where digital trails become undeniable.",
+    sceneClass: 'scene-it',
+    ethicalFlag: true,
+    sceneHTML: `
+      <div class="server-rack rack-1">
+        ${Array(12).fill('<div class="server-unit"></div>').join('')}
+      </div>
+      <div class="server-rack rack-2">
+        ${Array(12).fill('<div class="server-unit"></div>').join('')}
+      </div>
+      <div class="server-rack rack-3">
+        ${Array(12).fill('<div class="server-unit"></div>').join('')}
+      </div>
+      <div class="glass-partition"></div>
+      <div class="it-sign">
+        <div class="it-sign-uni">UNIVERSITI TEKNOLOGI NUSANTARA</div>
+        <div class="it-sign-divider"></div>
+        <div class="it-sign-text">IT DEPARTMENT</div>
+        <div class="it-sign-sub">NETWORK · SYSTEMS · SECURITY</div>
+      </div>
+      <div class="desk-it"></div>
+      <div class="desk-it-leg desk-it-leg-l"></div>
+      <div class="desk-it-leg desk-it-leg-r"></div>
+      <div class="pc-tower"></div>
+      <div class="pc-monitor"></div>
+      <div class="pc-monitor-stand"></div>
+      <div class="pc-monitor-base"></div>
+      <div class="pc-keyboard"></div>
+      <div class="it-chair">
+        <div class="ch-back"></div>
+        <div class="ch-seat"></div>
+        <div class="ch-pole"></div>
+        <div class="ch-base"></div>
+        <div class="ch-wheel ch-wheel-l"></div>
+        <div class="ch-wheel ch-wheel-r"></div>
+      </div>
+      <div class="it-char">
+        <div class="hair"></div>
+        <div class="head"></div>
+        <div class="eye-l"></div>
+        <div class="eye-r"></div>
+        <div class="body"></div>
+        <div class="arm-l"></div>
+        <div class="arm-r"></div>
+        <div class="leg-l"></div>
+        <div class="leg-r"></div>
+      </div>
+    `,
+    hotspots: [
+      { id: 'ev-guestnet', class: 'hs-guestnet label-anchor-left', label: 'Server rack 1 — Guest network',
+        evidence: { id: 'ev-guestnet', label: 'Guest network registration', short: 'Network registry' },
+        modal: { type: 'Digital Evidence', title: 'Guest network — device registry',
+          body: `<div class="ev-container"><div class="netreg">
+      <div class="netreg-title">UTN GUEST NETWORK · DEVICE REGISTRY</div>
+      <table class="netreg-table">
+        <thead><tr><th>Device Name</th><th>Registered To</th><th>Student ID</th><th>Sessions</th></tr></thead>
+        <tbody>
+          <tr><td>aminah-iphone</td><td>Aminah, S.</td><td>2021-LW-018</td><td>47</td></tr>
+          <tr><td>devan-mbp</td><td>Devan, R.</td><td>2022-EE-094</td><td>89</td></tr>
+          <tr class="match"><td>REDMI-DK-GUEST</td><td>Koh, Darren Nathan</td><td>2022-CS-0441</td><td>6</td></tr>
+          <tr><td>liyana-galaxy</td><td>Suffian, L.</td><td>2022-CS-041</td><td>54</td></tr>
+          <tr><td>iqbal-honor</td><td>Iqbal, M.</td><td>2021-EE-007</td><td>112</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;padding:10px;background:rgba(192,57,43,0.08);border-left:2px solid #c0392b;font-size:11px;color:#ff7b6b;font-family:'IBM Plex Mono',monospace">
+        ⚠ ANOMALY · REDMI-DK-GUEST sessions all on Tue 21:00–00:30 over 3 weeks<br>
+        ⚠ Each session preceded fake account post by &lt; 30 min (n=6, p&lt;0.001)
+      </div>
+    </div></div><p>The device "REDMI-DK-GUEST" was self-registered by Darren Koh three weeks ago — the same week the fake account first appeared. Six guest sessions, all on Tuesday nights, all preceded a fake post by under 30 minutes. The correlation is statistically beyond coincidence.</p>` } },
+      { id: 'ev-iplog', class: 'hs-iplog', label: 'Server rack 2 — IP logs',
+        evidence: { id: 'ev-iplog', label: 'Fake account IP trace', short: 'IP trace' },
+        modal: { type: 'Digital Evidence', title: 'Twitter API log — login IP addresses',
+          body: `<div class="ev-container"><div class="terminal-log">
+<span class="terminal-prompt">utn-it@admin:~$ </span><span class="terminal-output">twitter-api --account "@nadia.razali.real" --logins</span>
+
+<span class="terminal-comment"># Twitter API formal request · case UTN-2024-0441</span>
+<span class="terminal-warn">═══════════════════════════════════════════════════════</span>
+<span class="terminal-info">Account:</span>     @nadia.razali.real
+<span class="terminal-info">Created:</span>     2 Apr 2024 · 23:01:14
+<span class="terminal-info">Login count:</span> 14 sessions
+
+<span class="terminal-comment"># Login IP addresses (deduplicated):</span>
+
+<span class="terminal-warn">192.168.44.201</span>  → UTN library guest Wi-Fi (AP-04)
+                  <span class="terminal-comment">└ Sessions: Tue 2nd, 9th, 16th, 23rd</span>
+                  <span class="terminal-comment">└ Cross-ref: REDMI-DK-GUEST device</span>
+
+<span class="terminal-warn">10.0.214.88</span>     → UTN Dorm Block C · Room 214
+                  <span class="terminal-comment">└ Sessions: Wed 3rd, 10th, 17th</span>
+                  <span class="terminal-comment">└ Assigned occupant: Koh, Darren Nathan</span>
+
+<span class="terminal-prompt">utn-it@admin:~$ </span><span class="terminal-output">cross-reference --student "2022-CS-0441"</span>
+<span class="terminal-info">Student:</span>      Koh, Darren Nathan
+<span class="terminal-info">Dorm:</span>         Block C · Room 214 → 10.0.214.88 ✓
+<span class="terminal-info">Reg device:</span>   REDMI-DK-GUEST → 192.168.44.201 ✓
+<span class="terminal-warn">MATCH:</span>        <span class="terminal-warn">100% — both IPs trace to one student</span>
+    </div></div><p>The fake account\'s entire login history resolves to two IP addresses — both on UTN networks, both linked to one student ID: Darren Koh. The evidence chain is now closed.</p>` } },
+      { id: 'ev-discord', class: 'hs-discord label-anchor-right', label: 'Server rack 3 — Discord traffic',
+        evidence: { id: 'ev-discord', label: 'Discord activity timestamp', short: 'Discord log' },
+        modal: { type: 'Digital Evidence', title: 'Discord — server activity log',
+          body: `<div class="ev-container"><div class="discord">
+      <div class="discord-header"><span class="discord-hash">#</span><span class="discord-channel">private-thoughts</span></div>
+      <div class="discord-msg-list">
+        <div class="discord-msg">
+          <div class="discord-avatar">DK</div>
+          <div class="discord-content">
+            <div><span class="discord-author">d_koh_88</span><span class="discord-time">23:31</span></div>
+            <div class="discord-text">tuesday again. she\'s in the library like clockwork</div>
+          </div>
+        </div>
+        <div class="discord-msg">
+          <div class="discord-avatar">DK</div>
+          <div class="discord-content">
+            <div><span class="discord-author">d_koh_88</span><span class="discord-time">23:34</span></div>
+            <div class="discord-text">going to the bench. better signal there</div>
+          </div>
+        </div>
+        <div class="discord-msg">
+          <div class="discord-avatar">DK</div>
+          <div class="discord-content">
+            <div><span class="discord-author">d_koh_88</span><span class="discord-time">23:42</span></div>
+            <div class="discord-text">connected. drafting now</div>
+          </div>
+        </div>
+        <div class="discord-msg">
+          <div class="discord-avatar">DK</div>
+          <div class="discord-content">
+            <div><span class="discord-author">d_koh_88</span><span class="discord-time">23:49</span></div>
+            <div class="discord-text">posted. let\'s see how she likes it 😏</div>
+          </div>
+        </div>
+        <div class="discord-msg">
+          <div class="discord-avatar">DK</div>
+          <div class="discord-content">
+            <div><span class="discord-author">d_koh_88</span><span class="discord-time">23:56</span></div>
+            <div class="discord-text flag">done for tonight</div>
+          </div>
+        </div>
+      </div>
+    </div></div><p>Darren\'s Discord activity, captured via university network traffic monitoring, places him at every step of the timeline: pre-attack stakeout, location change for stronger signal, drafting, posting, and a final "done for tonight" eight minutes after the fake post went live. This is a confession in real-time.</p>` } },
+    ],
+    npc: { id: 'itstaff', name: 'Encik Hafiz', role: 'Network Administrator · IT Division', avatar: 'EH',
+      avatarBg: 'rgba(29,158,117,0.15)', avatarColor: '#1d9e75',
+      intro: "I've pulled what I can. Some of this data was on the guest network — collected without a formal warrant. Your call on how you proceed with it.",
+      questions: [
+        { id: 'iq1', text: 'Can you confirm the device registration?', response: "Confirmed. REDMI-DK-GUEST was self-registered under student ID 2022-CS-0441 — Darren Koh. Three weeks ago, right when the fake account first appeared." },
+        { id: 'iq2', text: 'Is this evidence legally admissible?', response: "That's the issue. Guest network data falls under the university's monitoring policy, but using it formally typically needs a warrant or consent. Flag it in your report." },
+        { id: 'iq3', text: 'Is the IP evidence conclusive?', response: "Professionally — yes. Timing, device, IP range, username pattern. All one person. Whether it's enough without a warrant is a question for legal counsel, not me." },
+      ] },
+    unlockMessage: 'All evidence secured. Proceed to the Security Office.',
+  },
+  {
+    id: 'security-office',
+    name: 'Security Office',
+    subtitle: 'Admin Block · Ground Floor',
+    description: "The Head of Campus Security sits across a large desk, your case file open in front of her. Behind her, a corkboard already pinned with screenshots and timestamps awaits your final connections. A warm desk lamp pools light over the file.",
+    sceneClass: 'scene-security',
+    sceneHTML: `
+      <div class="org-board">
+        <div class="org-board-title">ORGANISATION CHART</div>
+        <div class="org-board-divider"></div>
+        <div class="org-box org-box-top"><div class="org-box-text">VICE CHANCELLOR</div></div>
+        <div class="org-line org-line-v1"></div>
+        <div class="org-line org-line-h"></div>
+        <div class="org-line org-line-v2"></div>
+        <div class="org-line org-line-v3"></div>
+        <div class="org-box org-box-mid-l"><div class="org-box-text">CAMPUS<br>SECURITY</div></div>
+        <div class="org-box org-box-mid-r"><div class="org-box-text">STUDENT<br>AFFAIRS</div></div>
+        <div class="org-line org-line-h2"></div>
+        <div class="org-line org-line-h3"></div>
+        <div class="org-line org-line-v4"></div>
+        <div class="org-line org-line-v5"></div>
+        <div class="org-line org-line-v6"></div>
+        <div class="org-box org-box-bot-1"><div class="org-box-text">PATROL</div></div>
+        <div class="org-box org-box-bot-2"><div class="org-box-text">FORENSIC</div></div>
+        <div class="org-box org-box-bot-3"><div class="org-box-text">WELFARE</div></div>
+      </div>
+      <div class="corkboard-bg">
+        <div class="corkboard-paper"></div>
+        <div class="corkboard-paper"></div>
+        <div class="corkboard-paper"></div>
+        <div class="corkboard-paper"></div>
+        <div class="corkboard-paper"></div>
+        <div class="corkboard-paper"></div>
+        <div class="red-string string-1"></div>
+        <div class="red-string string-2"></div>
+        <div class="red-string string-3"></div>
+        <div class="pin pin-1"></div>
+        <div class="pin pin-2"></div>
+        <div class="pin pin-3"></div>
+        <div class="pin pin-4"></div>
+        <div class="pin pin-5"></div>
+      </div>
+      <div class="ethics-poster">
+        <div class="ethics-poster-title">WORK<br>ETHICS</div>
+        <div class="ethics-poster-divider"></div>
+        <div class="ethics-poster-line">· Integrity always</div>
+        <div class="ethics-poster-line">· Respect evidence</div>
+        <div class="ethics-poster-line">· Protect privacy</div>
+        <div class="ethics-poster-line">· Follow procedure</div>
+        <div class="ethics-poster-line">· Act with honour</div>
+        <div class="ethics-poster-seal">★</div>
+      </div>
+      <div class="security-char">
+        <div class="hair"></div>
+        <div class="head"></div>
+        <div class="eye-l"></div>
+        <div class="eye-r"></div>
+        <div class="mouth"></div>
+        <div class="body"></div>
+        <div class="arm-l"></div>
+        <div class="arm-r"></div>
+        <div class="leg-l"></div>
+        <div class="leg-r"></div>
+      </div>
+      <div class="desk-s">
+        <div class="file-folder"></div>
+        <div class="desk-sign"></div>
+      </div>
+      <div class="desk-s-legs"></div>
+      <div class="lamp-s"></div>
+      <div class="lamp-base"></div>
+    `,
+    hotspots: [],
+    npc: { id: 'security', name: 'Puan Suraya', role: 'Head of Campus Security', avatar: 'PS',
+      avatarBg: 'rgba(200,169,110,0.2)', avatarColor: '#c8a96e',
+      intro: "I've reviewed your preliminary notes. We have enough to proceed — but I need your formal verdict. Review your evidence and name the person responsible.",
+      questions: [
+        { id: 'sq1', text: 'What happens after I submit my verdict?', response: "If the evidence holds, the case goes to the Student Disciplinary Board for suspension or expulsion. If there's a legal dimension, we refer to police. Your forensic report is the foundation." },
+        { id: 'sq2', text: 'What about the warrant issue with network data?', response: "If you flagged it in your report, we run it through legal counsel before formal action. If you didn't flag it — that could be a problem later. Evidence might be challenged." },
+      ] },
+    isVerdict: true,
+  }
+];
+
+function startGame() { showScreen('game-screen'); renderSidebar(); loadLocation(0); }
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+function renderSidebar() {
+  const nav = document.getElementById('location-nav');
+  nav.innerHTML = locations.map((loc, i) => {
+    let cls = 'location-item';
+    if (i === state.currentLocation) cls += ' active';
+    const locked = i > 0 && !state.locationsDone[i-1];
+    if (locked) cls += ' locked';
+    if (state.locationsDone[i]) cls += ' done';
+    return `<div class="${cls}" onclick="${locked ? '' : `loadLocation(${i})`}"><div class="location-dot"></div>${loc.name}</div>`;
+  }).join('');
+  const evSidebar = document.getElementById('evidence-sidebar');
+  evSidebar.innerHTML = state.evidence.length
+    ? state.evidence.map(e => `<span class="evidence-pill">${e.short}</span>`).join('')
+    : '<span style="font-size:11px;color:var(--muted)">None yet</span>';
+}
+
+function loadLocation(index) {
+  if (index > 0 && !state.locationsDone[index - 1]) return;
+  state.currentLocation = index;
+  const loc = locations[index];
+  document.getElementById('scene-location-title').textContent = `${loc.name} · ${loc.subtitle}`;
+  const main = document.getElementById('scene-main');
+  const foundHere = loc.hotspots.filter(h => state.evidence.find(e => e.id === h.id)).length;
+  const totalHere = loc.hotspots.length;
+  document.getElementById('scene-progress').textContent = loc.isVerdict ? 'Final step' : (totalHere > 0 ? `${foundHere}/${totalHere} items found` : 'Investigation complete');
+
+  let html = '';
+
+  // Illustrated scene with hotspots
+  let hotspotHTML = '';
+  loc.hotspots.forEach(h => {
+    const found = state.evidence.find(e => e.id === h.id);
+    hotspotHTML += `<div class="hotspot ${h.class}${found ? ' found' : ''}" onclick="${found ? '' : `openHotspot('${h.id}')`}">
+      ${h.innerHTML || ''}
+      ${!found ? '<div class="hotspot-pulse"></div>' : ''}
+      <div class="hotspot-label">${h.label}</div>
+    </div>`;
+  });
+
+  html += `<div class="illustrated-scene ${loc.sceneClass}">${loc.sceneHTML}${hotspotHTML}</div>`;
+  html += `<div class="scene-description">${loc.description}</div>`;
+
+  if (loc.ethicalFlag && !state.ethicalHandled) {
+    html += `<div class="ethical-flag">
+      <div class="ethical-flag-title">⚠ ETHICAL & LEGAL FLAG</div>
+      <p>Some evidence at this location was collected from the university guest network without a formal warrant. Under the Malaysian Communications and Multimedia Act 1998 and the university's data handling policy, use of this data in formal proceedings may require additional authorisation.</p>
+      <p style="margin-top:8px">Do you flag this concern in your report before proceeding?</p>
+      <div style="margin-top:12px">
+        <button class="flag-btn flag" onclick="handleEthics(true)">Flag the concern (+15 pts)</button>
+        <button class="flag-btn ignore" onclick="handleEthics(false)">Proceed without flagging</button>
+      </div>
+    </div>`;
+  }
+
+  if (loc.npc) {
+    html += `<div class="npc-section">
+      <div class="npc-card" onclick="openNPC('${loc.id}')">
+        <div class="npc-avatar" style="background:${loc.npc.avatarBg};color:${loc.npc.avatarColor}">${loc.npc.avatar}</div>
+        <div class="npc-info">
+          <div class="npc-name">${loc.npc.name}</div>
+          <div class="npc-role">${loc.npc.role}</div>
+        </div>
+        <div class="npc-cta">INTERVIEW →</div>
+      </div>
+    </div>`;
+  }
+
+  if (loc.isVerdict) {
+    html += `<div class="verdict-cta-box">
+      <h3>Submit Final Report</h3>
+      <p>You have ${state.evidence.length} pieces of evidence on record. When ready, proceed to name your suspect.</p>
+      <button class="btn-verdict" onclick="goToVerdict()" style="max-width:320px">Proceed to Final Verdict →</button>
+    </div>`;
+  }
+
+  if (state.locationsDone[index] && loc.unlockMessage && !loc.isVerdict) {
+    html += `<div class="unlock-banner">✓ ${loc.unlockMessage}</div>`;
+  }
+
+  main.innerHTML = html;
+  renderSidebar();
+}
+
+function openHotspot(id) {
+  const loc = locations[state.currentLocation];
+  const h = loc.hotspots.find(x => x.id === id);
+  if (!h) return;
+  document.getElementById('modal-type').textContent = h.modal.type;
+  document.getElementById('modal-title').textContent = h.modal.title;
+  document.getElementById('modal-body').innerHTML = h.modal.body;
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn-dismiss" onclick="closeModal()">Close</button>
+    <button class="btn-collect" onclick="collectEvidence('${id}')">Collect Evidence</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function collectEvidence(id) {
+  const loc = locations[state.currentLocation];
+  const h = loc.hotspots.find(x => x.id === id);
+  if (!h || state.evidence.find(e => e.id === id)) { closeModal(); return; }
+  state.evidence.push(h.evidence);
+  closeModal();
+  const allFound = loc.hotspots.every(hs => state.evidence.find(e => e.id === hs.id));
+  if (allFound && !state.locationsDone[state.currentLocation]) state.locationsDone[state.currentLocation] = true;
+  loadLocation(state.currentLocation);
+}
+
+function openNPC(locId) {
+  const loc = locations.find(l => l.id === locId);
+  const npc = loc.npc;
+  if (!state.dialogueProgress[npc.id]) state.dialogueProgress[npc.id] = {};
+  // For verdict location, mark done after first interview
+  if (loc.isVerdict && loc.hotspots.length === 0) state.locationsDone[state.currentLocation] = true;
+  renderDialogue(npc, locId);
+  document.getElementById('modal').classList.add('open');
+}
+
+function renderDialogue(npc, locId) {
+  document.getElementById('modal-type').textContent = 'Interview';
+  document.getElementById('modal-title').textContent = npc.name;
+  const asked = state.dialogueProgress[npc.id];
+  const questionsLeft = npc.questions.some(q => !asked[q.id]);
+  let body = `<div class="dialogue-npc">
+    <div style="background:${npc.avatarBg};color:${npc.avatarColor};width:36px;height:36px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Special Elite',cursive;">${npc.avatar}</div>
+    <div class="dialogue-bubble">${asked._lastResponse || npc.intro}</div>
+  </div>`;
+  if (questionsLeft) {
+    body += `<div class="dialogue-choices">`;
+    npc.questions.forEach(q => {
+      const wasAsked = asked[q.id];
+      body += `<button class="dialogue-choice${wasAsked ? ' asked' : ''}" onclick="${wasAsked ? '' : `askQuestion('${npc.id}','${q.id}','${locId}')`}">${wasAsked ? '✓ ' : ''}${q.text}</button>`;
+    });
+    body += `</div>`;
+  } else {
+    body += `<p style="font-size:12px;color:var(--muted);margin-top:12px">You've asked everything relevant. The interview is complete.</p>`;
+  }
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-footer').innerHTML = `<button class="btn-dismiss" onclick="closeModal()">End Interview</button>`;
+}
+
+function askQuestion(npcId, questionId, locId) {
+  const loc = locations.find(l => l.id === locId);
+  const q = loc.npc.questions.find(x => x.id === questionId);
+  if (!state.dialogueProgress[npcId]) state.dialogueProgress[npcId] = {};
+  state.dialogueProgress[npcId][questionId] = true;
+  state.dialogueProgress[npcId]._lastResponse = q.response;
+  renderDialogue(loc.npc, locId);
+}
+
+function handleEthics(flagged) {
+  state.ethicalHandled = true;
+  if (flagged) { state.ethicalFlagged = true; state.score += 15; }
+  loadLocation(state.currentLocation);
+}
+
+function goToVerdict() {
+  showScreen('verdict-screen');
+  document.getElementById('verdict-evidence-list').innerHTML = state.evidence.map(e => `<span class="evidence-pill">${e.label}</span>`).join('');
+}
+
+function selectSuspect(id, ev) {
+  state.selectedSuspect = id;
+  document.querySelectorAll('.suspect-card').forEach(c => c.classList.remove('selected'));
+  ev.currentTarget.classList.add('selected');
+  document.getElementById('verdict-btn').disabled = false;
+}
+
+function submitVerdict() {
+  const correct = state.selectedSuspect === 'darren';
+  const ethical = state.ethicalFlagged;
+  const evidenceCount = state.evidence.length;
+  let score = state.score;
+  let title, body, icon, scoreColor;
+  if (correct && ethical) {
+    title = "Case Closed — Exemplary Work";
+    body = "Darren Koh has been identified as the perpetrator. Your decision to flag the warrant concern ensured the case will hold up. Disciplinary Board notified, legal counsel reviewing the network data. Nadia's account restored.";
+    icon = "⭐"; score = Math.min(100, score + 10); scoreColor = 'var(--success)';
+  } else if (correct && !ethical) {
+    title = "Case Solved — Procedural Issue";
+    body = "You correctly identified Darren Koh. However, the network evidence wasn't flagged. The defence challenged admissibility of the guest network logs. Case delayed six weeks while legal reviewed procedures. Next time, flag the issue first.";
+    icon = "📋"; score = Math.max(0, score - 10); scoreColor = 'var(--accent)';
+  } else {
+    title = "Wrong Conclusion";
+    body = `You accused ${state.selectedSuspect === 'faiz' ? 'Faiz Hairuddin' : 'Liyana Suffian'}, who was innocent. The real perpetrator — Darren Koh — was not apprehended. Nadia's fake account remained active for another three weeks. The evidence was there. It needed to be followed.`;
+    icon = "❌"; score = Math.max(0, score - 40); scoreColor = 'var(--danger)';
+  }
+  score = Math.min(100, Math.max(0, score - Math.max(0, (10 - evidenceCount) * 3)));
+  document.getElementById('ending-icon').textContent = icon;
+  document.getElementById('ending-title').textContent = title;
+  document.getElementById('ending-body').textContent = body;
+  document.getElementById('ending-score').textContent = score + ' / 100';
+  document.getElementById('ending-score').style.color = scoreColor;
+  showScreen('ending-screen');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+</script>
+</body>
+</html>
