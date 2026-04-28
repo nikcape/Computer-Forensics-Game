@@ -29,7 +29,7 @@ Open `index.html` in a modern browser, or serve the folder through any static ho
 Recommended file:
 
 ```text
-ghost-of-harlow-hall-v2/index.html
+ghost-of-harlow-hall v2/index.html
 ```
 
 ## Notes

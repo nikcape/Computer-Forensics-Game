@@ -5,7 +5,7 @@
 Use:
 
 ```text
-ghost-of-harlow-hall-v2/index.html
+ghost-of-harlow-hall v2/index.html
 ```
 
 The original `ghost-of-harlow-hall/` folder is still available as the preserved v1 build.
@@ -13,7 +13,7 @@ The original `ghost-of-harlow-hall/` folder is still available as the preserved 
 ## Quick start
 
 1. Clone or download the repository.
-2. Open the `ghost-of-harlow-hall-v2` folder.
+2. Open the `ghost-of-harlow-hall v2` folder.
 3. Launch `index.html` in a modern browser.
 
 ## Optional local server
@@ -23,7 +23,7 @@ A server is not required, but it is convenient for local testing.
 Using Python:
 
 ```bash
-cd ghost-of-harlow-hall-v2
+cd "ghost-of-harlow-hall v2"
 python -m http.server 8000
 ```
 
