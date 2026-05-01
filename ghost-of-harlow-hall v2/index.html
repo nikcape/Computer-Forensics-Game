@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Ghost of Harlow Hall v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="login-screen" class="screen active auth-screen">
+  <div class="auth-card">
+    <p class="title-badge">Universiti Teknologi Nusantara · Digital Forensics Division</p>
+    <h1 class="title-main">Investigator Login</h1>
+    <p class="title-sub">Identify yourself before accessing the Harlow Hall case file.</p>
+    <form id="login-form" class="login-form" novalidate>
+      <label class="field-block">
+        <span class="field-label">Full Name</span>
+        <input id="player-name" name="playerName" class="field-input" type="text" autocomplete="name" placeholder="e.g. Nur Aisyah Binti Rahman">
+        <span id="player-name-error" class="field-error"></span>
+      </label>
+      <label class="field-block">
+        <span class="field-label">Student ID</span>
+        <input id="student-id" name="studentId" class="field-input field-input-mono" type="text" inputmode="text" maxlength="10" autocomplete="off" placeholder="CS01087788">
+        <span class="field-helper">Format: 2 letters followed by 8 digits</span>
+        <span id="student-id-error" class="field-error"></span>
+      </label>
+      <button id="login-submit" class="btn-start login-submit" type="submit" disabled>Access Case File</button>
+    </form>
+  </div>
+</div>
+
+<div id="title-screen" class="screen">
+  <p class="title-badge">Universiti Teknologi Nusantara · Digital Forensics Division</p>
+  <h1 class="title-main">The Ghost of<br>Harlow Hall</h1>
+  <div class="title-divider"></div>
+  <p class="title-sub">A Digital Forensic Investigation</p>
+  <p id="title-player-line" class="title-player-line"></p>
+  <div class="case-file">
+    <div class="case-file-label">Case File · UTN-2024-0441</div>
+    <p>A student's identity has been stolen. A fake social media account bearing her name is spreading lies across campus. The real perpetrator is hiding in the data. You have been assigned to find them.</p>
+  </div>
+  <div class="title-actions">
+    <button class="btn-start" type="button" onclick="startGame()">Begin Investigation</button>
+    <button class="btn-secondary" type="button" onclick="resetInvestigation()">New Investigation</button>
+  </div>
+</div>
+
+<div id="game-screen" class="screen">
+  <div class="scene-shell">
+    <header class="scene-topbar">
+      <div>
+        <div id="player-chip" class="player-chip">—</div>
+        <div class="scene-location" id="scene-location-title">—</div>
+        <div class="scene-subcopy" id="scene-subcopy">Clear the checklist, interview witnesses, and follow the evidence.</div>
+      </div>
+      <div class="scene-header-actions">
+        <button id="tutorial-replay-btn" class="header-icon-btn" type="button" title="Replay tutorial">?</button>
+        <span class="scene-progress" id="scene-progress">—</span>
+      </div>
+    </header>
+    <div class="status-strip">
+      <div id="scene-hint" class="scene-hint"></div>
+      <div id="save-status" class="save-status inline">Autosave ready</div>
+    </div>
+    <main class="scene-main" id="scene-main"></main>
+  </div>
+</div>
+
+<div id="verdict-screen" class="screen">
+  <div class="verdict-layout">
+    <div class="verdict-topbar">
+      <div>
+        <h2 class="verdict-title">Final Verdict Board</h2>
+        <p class="verdict-sub">Review the evidence you collected and identify the person responsible.</p>
+        <p id="verdict-player-line" class="verdict-player-line"></p>
+      </div>
+      <div class="verdict-toolbar">
+        <button class="sidebar-btn" type="button" onclick="returnToInvestigation()">Return to Investigation</button>
+        <button class="sidebar-btn" type="button" onclick="openCaseReport()">Export Report</button>
+      </div>
+    </div>
+    <div class="verdict-corkboard">
+      <section class="verdict-board-area">
+        <div class="verdict-panel-title">Evidence Board</div>
+        <div class="verdict-board-surface">
+          <div class="verdict-string verdict-string-1"></div>
+          <div class="verdict-string verdict-string-2"></div>
+          <div class="verdict-string verdict-string-3"></div>
+          <div id="verdict-evidence-board" class="verdict-evidence-board"></div>
+        </div>
+      </section>
+      <aside class="verdict-side-panel">
+        <div class="verdict-suspects">
+          <div class="verdict-panel-title">Suspects</div>
+          <div class="suspect-grid" id="verdict-suspect-list"></div>
+        </div>
+        <div class="verdict-actions-panel">
+          <div class="verdict-panel-title">Investigator Summary</div>
+          <div class="verdict-summary-note" id="verdict-summary-note"></div>
+          <button class="btn-verdict" id="verdict-btn" type="button" onclick="submitVerdict()" disabled>Submit Case Report</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div id="ending-screen" class="screen">
+  <div class="ending-icon" id="ending-icon">🔍</div>
+  <h2 class="ending-title" id="ending-title">—</h2>
+  <p class="ending-body" id="ending-body">—</p>
+  <div class="ending-player" id="ending-player">—</div>
+  <div class="score-box">
+    <div class="score-label">Case Score</div>
+    <div class="score-value" id="ending-score">—</div>
+  </div>
+  <div class="score-breakdown-box">
+    <div class="score-label">Score Breakdown</div>
+    <div id="score-breakdown" class="score-breakdown"></div>
+  </div>
+  <div id="certificate-status" class="certificate-status"></div>
+  <div class="ending-actions">
+    <button class="btn-report" type="button" onclick="openCaseReport()">Open Case Report</button>
+    <button id="certificate-btn" class="btn-report" type="button" onclick="openCertificate()" hidden>Open Certificate</button>
+    <button class="btn-replay" type="button" onclick="returnToInvestigation()">Return to Case</button>
+    <button class="btn-replay" type="button" onclick="resetInvestigation(false)">New Investigation</button>
+  </div>
+</div>
+
+<div id="phone-shell" class="phone-shell" aria-hidden="true">
+  <button id="phone-tab" class="phone-tab" type="button">Tap to Open Investigation Hub</button>
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-header">
+      <button id="phone-home-btn" class="phone-icon-btn" type="button" title="Phone home">⌂</button>
+      <div class="phone-header-copy">
+        <div class="phone-title">Investigation Hub</div>
+        <div id="phone-subtitle" class="phone-subtitle">Ready</div>
+      </div>
+      <button id="phone-close-btn" class="phone-icon-btn" type="button" title="Close phone">×</button>
+    </div>
+    <div id="phone-content" class="phone-content"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-type" id="modal-type"></div>
+        <div class="modal-title" id="modal-title"></div>
+      </div>
+      <button class="modal-close" type="button" aria-label="Close dialog" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<div id="tutorial-overlay" class="tutorial-overlay" hidden>
+  <div id="tutorial-highlight" class="tutorial-highlight"></div>
+  <div id="tutorial-tooltip" class="tutorial-tooltip">
+    <div id="tutorial-step-label" class="tutorial-step-label">Tutorial</div>
+    <div id="tutorial-message" class="tutorial-message"></div>
+    <div class="tutorial-actions">
+      <button id="tutorial-next-btn" class="btn-dismiss" type="button">Got it</button>
+      <button id="tutorial-skip-btn" class="btn-collect tutorial-skip" type="button">Skip Tutorial</button>
+    </div>
+  </div>
+</div>
+
+<script src="scenes.js"></script>
+<script src="evidence.js"></script>
+<script src="sounds.js"></script>
+<script src="certificate.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
