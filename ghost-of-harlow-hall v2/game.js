@@ -487,6 +487,8 @@ function getRecentEvidenceNotes(limit = 4) {
 
 function renderPhone() {
   dom.phoneShell.classList.toggle('open', state.phone.open);
+  dom.phoneTab.setAttribute('aria-expanded', state.phone.open ? 'true' : 'false');
+  dom.phoneTab.setAttribute('aria-label', state.phone.open ? 'Investigation Hub open' : 'Open Investigation Hub');
   const subtitleMap = {
     home: 'Select an app',
     locations: 'Travel between scenes',
