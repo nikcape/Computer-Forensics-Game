@@ -1507,6 +1507,7 @@ button:focus-visible,
   display: none;
   width: min(var(--phone-width), calc(100vw - 22px));
   max-width: calc(100vw - 22px);
+  pointer-events: none;
 }
 
 .phone-shell.visible {
@@ -1532,6 +1533,7 @@ button:focus-visible,
   cursor: pointer;
   box-shadow: 0 12px 28px rgba(0,0,0,0.3);
   text-align: center;
+  pointer-events: auto;
 }
 
 .phone-tab::before {

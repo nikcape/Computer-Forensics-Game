@@ -683,9 +683,11 @@ function renderLocation(index, { persist = true, activateScreen = true } = {}) {
   if (location.isVerdict) {
     const briefingDone = getInterviewProgress(location).complete;
     html += `<div class="verdict-cta-box">
-      <h3>Submit Final Report</h3>
-      <p>${briefingDone ? `You have ${state.evidence.length} pieces of evidence on record. The final briefing is complete — proceed to the verdict board.` : 'Interview Puan Suraya fully before the verdict board unlocks.'}</p>
-      <button type="button" class="btn-verdict" style="max-width:320px" data-action="goto-verdict" ${briefingDone ? '' : 'disabled'}>Proceed to Final Verdict →</button>
+      <h3>${briefingDone ? 'Submit Final Report' : 'Final Briefing Required'}</h3>
+      <p>${briefingDone
+        ? `You have ${state.evidence.length} pieces of evidence on record. The final briefing is complete — proceed to the verdict board.`
+        : 'Interview Puan Suraya first. The button below will open the briefing so you can unlock the final verdict.'}</p>
+      <button type="button" class="btn-verdict" style="max-width:320px" data-action="${briefingDone ? 'goto-verdict' : 'open-npc'}" data-location="${location.id}">${briefingDone ? 'Proceed to Final Verdict →' : 'Interview Puan Suraya →'}</button>
     </div>`;
   }
   if (isLocationComplete(location) && location.unlockMessage && !location.isVerdict) {
@@ -693,6 +695,7 @@ function renderLocation(index, { persist = true, activateScreen = true } = {}) {
   }
   dom.sceneMain.innerHTML = html;
   renderPhone();
+  updatePhoneVisibility();
   if (persist) saveState();
   sounds.startAmbient(location.id);
   maybeStartTutorial();
@@ -839,7 +842,10 @@ function renderVerdictScreen() {
 
 function goToVerdict() {
   const location = LOCATIONS[state.currentLocation];
-  if (location?.isVerdict && !getInterviewProgress(location).complete) return;
+  if (location?.isVerdict && !getInterviewProgress(location).complete) {
+    if (location.npc) openNPC(location.id);
+    return;
+  }
   renderVerdictScreen();
   showScreen('verdict-screen');
 }
