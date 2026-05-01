@@ -1393,10 +1393,13 @@ button:focus-visible,
 #game-screen {
   display: block;
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .scene-shell {
-  min-height: 100vh;
+  min-height: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -1502,6 +1505,8 @@ button:focus-visible,
   bottom: 0;
   z-index: 60;
   display: none;
+  width: min(var(--phone-width), calc(100vw - 22px));
+  max-width: calc(100vw - 22px);
 }
 
 .phone-shell.visible {
@@ -1510,21 +1515,37 @@ button:focus-visible,
 
 .phone-tab {
   position: absolute;
-  left: 18px;
-  bottom: 16px;
-  padding: 10px 14px;
-  border-radius: 999px;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 18px 18px;
+  border-radius: 24px 24px 0 0;
   border: 1px solid rgba(200,169,110,0.4);
-  background: rgba(17,17,17,0.92);
+  background: linear-gradient(180deg, rgba(32,32,36,0.97), rgba(14,14,18,0.98));
   color: var(--accent);
-  font: inherit;
+  font-family: 'Special Elite', cursive;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.26);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.phone-tab::before {
+  content: '▲';
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: rgba(200,169,110,0.78);
 }
 
 .phone-frame {
-  width: var(--phone-width);
-  height: 640px;
+  width: 100%;
+  height: min(640px, calc(100vh - 12px));
+  max-height: calc(100vh - 12px);
   background: linear-gradient(180deg, #1b1b1f 0%, #0f1013 100%);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 28px 28px 0 0;
@@ -1533,6 +1554,8 @@ button:focus-visible,
   transition: transform 0.3s ease;
   box-shadow: 0 24px 60px rgba(0,0,0,0.32);
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .phone-shell.open .phone-frame {
@@ -1583,11 +1606,15 @@ button:focus-visible,
 }
 
 .phone-content {
-  height: calc(100% - 54px);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  padding: 10px;
+  padding: 10px 10px 22px;
   border-radius: 22px;
   background: linear-gradient(180deg, rgba(34,34,40,0.98), rgba(16,16,20,0.98));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .phone-identity,
@@ -1672,6 +1699,7 @@ button:focus-visible,
 .audio-controls {
   display: grid;
   gap: 10px;
+  padding-bottom: 6px;
 }
 
 .phone-list-item,
@@ -1711,6 +1739,16 @@ button:focus-visible,
 
 .audio-toggle {
   color: var(--text);
+}
+
+.scene-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 24px 168px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .tutorial-overlay {
@@ -1788,18 +1826,22 @@ button:focus-visible,
   }
 
   .phone-shell {
-    left: 0;
-    right: 0;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
   }
 
   .phone-frame {
-    width: min(100vw, 100%);
+    width: min(100vw - 24px, 100%);
     border-radius: 24px 24px 0 0;
     margin: 0 auto;
   }
 
   .phone-tab {
-    left: 16px;
+    width: 100%;
+    left: 0;
+    right: 0;
   }
 }
 
@@ -1815,5 +1857,32 @@ button:focus-visible,
 
   .phone-app-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .scene-main {
+    padding: 16px 16px 176px;
+  }
+
+  .phone-shell {
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .phone-tab {
+    bottom: 10px;
+    width: calc(100vw - 20px);
+    left: 10px;
+    right: 10px;
+    min-height: 68px;
+    padding: 14px 16px 16px;
+  }
+
+  .phone-frame {
+    width: 100vw;
+    height: min(78vh, calc(100vh - 6px));
+    max-height: calc(100vh - 6px);
+    border-radius: 22px 22px 0 0;
+    padding: 12px 12px 16px;
   }
 }
